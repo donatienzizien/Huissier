@@ -42,7 +42,7 @@ export class DossiersController {
     return this.dossiersService.updateStatut(id, dto, user.sub);
   }
 
-  @Roles('HUISSIER', 'CLERC')
+  @Roles('HUISSIER')
   @Patch(':id/tiers')
   updateTiers(
     @Param('id') id: string,
@@ -82,3 +82,4 @@ export class DossiersController {
     return this.dossiersService.remove(id);
   }
 }
+
