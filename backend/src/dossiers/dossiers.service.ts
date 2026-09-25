@@ -27,34 +27,63 @@ export class DossiersService {
   }
 
   async create(dto: CreateDossierDto, utilisateurId: string) {
-    const client = await this.tenantDb.queryOne(`SELECT id FROM clients WHERE id = $1`, [dto.clientId]);
-    if (!client) throw new NotFoundException('Client introuvable.');
+    const client = await this.tenantDb.queryOne<{ id: string }>(
+      `SELECT id FROM clients WHERE id = $1 AND role_tiers = 'CLIENT'`,
+      [dto.clientId],
+    );
+    if (!client) {
+      throw new NotFoundException('Client mandant introuvable ou fiche non classee comme CLIENT.');
+    }
 
-    if (dto.debiteurId) {
-      const debiteur = await this.tenantDb.queryOne(`SELECT id FROM clients WHERE id = $1`, [dto.debiteurId]);
-      if (!debiteur) throw new NotFoundException('Debiteur introuvable.');
+    const debiteur = await this.tenantDb.queryOne<{ id: string }>(
+      `SELECT id FROM clients WHERE id = $1 AND role_tiers = 'DEBITEUR'`,
+      [dto.debiteurId],
+    );
+    if (!debiteur) {
+      throw new NotFoundException('Debiteur introuvable ou fiche non classee comme DEBITEUR.');
+    }
+
+    if (dto.clientId === dto.debiteurId) {
+      throw new BadRequestException('Le client mandant et le debiteur doivent etre deux fiches distinctes.');
     }
 
     return this.tenantDb.transaction(async (txClient) => {
-      const numero = await this.prochainNumero();
+      const annee = new Date().getFullYear();
+      const cle = `dossier_${annee}`;
+      const compteur = await txClient.query(
+        `INSERT INTO compteurs (cle, valeur) VALUES ($1, 1)
+         ON CONFLICT (cle) DO UPDATE SET valeur = compteurs.valeur + 1
+         RETURNING valeur`,
+        [cle],
+      );
+      const sequence = String(compteur.rows[0].valeur).padStart(4, '0');
+      const numero = `DOS-${annee}-${sequence}`;
+
       const dossierResult = await txClient.query(
         `INSERT INTO dossiers (numero, type, client_id, debiteur_id, cree_par, description)
          VALUES ($1, $2, $3, $4, $5, $6)
          RETURNING *`,
-        [numero, dto.type, dto.clientId, dto.debiteurId ?? null, utilisateurId, dto.description ?? null],
+        [numero, dto.type, dto.clientId, dto.debiteurId, utilisateurId, dto.description],
       );
       const dossier = dossierResult.rows[0];
 
       await txClient.query(
         `INSERT INTO dossier_historique (dossier_id, utilisateur_id, action, details)
          VALUES ($1, $2, 'CREATION', $3)`,
-        [dossier.id, utilisateurId, JSON.stringify({ type: dto.type })],
+        [
+          dossier.id,
+          utilisateurId,
+          JSON.stringify({
+            type: dto.type,
+            clientId: dto.clientId,
+            debiteurId: dto.debiteurId,
+          }),
+        ],
       );
 
       return dossier;
     });
   }
-
   // Restriction d'acces AGENT_TERRAIN : ne voit que les dossiers ou il
   // est designe comme agent (assigne_agent_id). Les autres roles voient
   // tout, sans restriction supplementaire ici (le controle par module
@@ -221,11 +250,11 @@ export class DossiersService {
     if (!dossier) throw new NotFoundException('Dossier introuvable.');
 
     if (dto.clientId) {
-      const client = await this.tenantDb.queryOne(`SELECT id FROM clients WHERE id = $1`, [dto.clientId]);
+      const client = await this.tenantDb.queryOne(`SELECT id FROM clients WHERE id = $1 AND role_tiers = 'CLIENT'`, [dto.clientId]);
       if (!client) throw new NotFoundException('Client introuvable.');
     }
     if (dto.debiteurId) {
-      const debiteur = await this.tenantDb.queryOne(`SELECT id FROM clients WHERE id = $1`, [dto.debiteurId]);
+      const debiteur = await this.tenantDb.queryOne(`SELECT id FROM clients WHERE id = $1 AND role_tiers = 'DEBITEUR'`, [dto.debiteurId]);
       if (!debiteur) throw new NotFoundException('Debiteur introuvable.');
     }
     if (dto.clientId === undefined && dto.debiteurId === undefined) {
@@ -370,4 +399,6 @@ export class DossiersService {
     return { id, numero: dossier.numero, supprime: true };
   }
 }
+
+
 

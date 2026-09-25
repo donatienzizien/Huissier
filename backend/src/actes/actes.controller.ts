@@ -26,8 +26,8 @@ export class ActesController {
 
   // File d'attente de validation, filtree selon ce que le role courant
   // peut effectivement valider.
-  @Roles('HUISSIER', 'CLERC')
-  @Get('a-valider')
+  @Roles('HUISSIER')
+  
   findEnAttenteValidation(@CurrentUser() user: AuthenticatedUser) {
     return this.actesService.findEnAttenteValidation(user);
   }
@@ -67,8 +67,8 @@ export class ActesController {
     return this.actesService.soumettre(id, user.sub);
   }
 
-  @Roles('HUISSIER', 'CLERC')
-  @Patch(':id/corriger')
+  @Roles('HUISSIER')
+  
   corrigerEnAttente(
     @Param('id') id: string,
     @Body() dto: UpdateBrouillonDto,
@@ -77,14 +77,14 @@ export class ActesController {
     return this.actesService.corrigerEnAttente(id, dto, user);
   }
 
-  @Roles('HUISSIER', 'CLERC')
-  @Patch(':id/valider')
+  @Roles('HUISSIER')
+  
   valider(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.actesService.valider(id, user);
   }
 
-  @Roles('HUISSIER', 'CLERC')
-  @Patch(':id/rejeter')
+  @Roles('HUISSIER')
+  
   rejeter(
     @Param('id') id: string,
     @Body() dto: RejeterActeDto,
@@ -112,20 +112,20 @@ export class ActesController {
     res.send(buffer);
   }
 
-  @Roles('HUISSIER', 'CLERC')
-  @Post(':id/envoyer-client')
+  @Roles('HUISSIER')
+  
   envoyerAuClient(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.actesService.envoyerAuClient(id, user.sub);
   }
 
-  @Roles('HUISSIER', 'CLERC')
-  @Patch(':id/marquer-signe')
+  @Roles('HUISSIER')
+  
   marquerSigne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.actesService.marquerSigne(id, user.sub);
   }
 
-  @Roles('HUISSIER', 'CLERC')
-  @Patch(':id/marquer-notifie')
+  @Roles('HUISSIER')
+  
   marquerNotifie(
     @Param('id') id: string,
     @Body() dto: MarquerNotifieDto,
@@ -140,4 +140,6 @@ export class ActesController {
     return this.actesService.remove(id);
   }
 }
+
+
 

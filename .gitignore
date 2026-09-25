@@ -59,3 +59,13 @@ backup-*/
 *.pfx
 secrets/
 **/secrets/
+
+# Sauvegardes locales backend
+backend/backup-*
+
+backups/
+**/backups/
+
+# Rapports locaux d'audit
+backend/audit-workflow-*.txt
+backend/details-workflow-*.txt
