@@ -18,10 +18,8 @@ import { MarquerNotifieDto } from './dto/marquer-notifie.dto';
 
 const STORAGE_ROOT = process.env.ACTES_STORAGE_PATH ?? join(process.cwd(), 'storage');
 
-function peutValider(role: string, niveauRequis: 'CLERC' | 'HUISSIER'): boolean {
-  if (role === 'HUISSIER') return true;
-  if (role === 'CLERC') return niveauRequis === 'CLERC';
-  return false;
+function peutValider(role: string): boolean {
+  return role === 'HUISSIER';
 }
 
 @Injectable()
@@ -277,14 +275,8 @@ export class ActesService {
     if (acte.statut_validation !== 'EN_ATTENTE_VALIDATION') {
       throw new BadRequestException("Cet acte n'est pas en attente de validation.");
     }
-
-    const modele = await this.tenantDb.queryOne<{ niveau_validation_requis: 'CLERC' | 'HUISSIER' }>(
-      `SELECT niveau_validation_requis FROM modeles_actes WHERE type = $1 ORDER BY created_at ASC LIMIT 1`,
-      [acte.type],
-    );
-    const niveauRequis = modele?.niveau_validation_requis ?? 'CLERC';
-    if (!peutValider(currentUser.role, niveauRequis)) {
-      throw new ForbiddenException("Vous n'etes pas autorise a corriger cet acte.");
+    if (!peutValider(currentUser.role)) {
+      throw new ForbiddenException("Seul l'Huissier peut corriger un acte soumis.");
     }
 
     const updated = await this.tenantDb.queryOne(
@@ -339,16 +331,8 @@ export class ActesService {
     if (!acte.corps_html) {
       throw new BadRequestException('Contenu de l\'acte manquant.');
     }
-
-    const modele = await this.tenantDb.queryOne<{ niveau_validation_requis: 'CLERC' | 'HUISSIER' }>(
-      `SELECT niveau_validation_requis FROM modeles_actes WHERE type = $1 ORDER BY created_at ASC LIMIT 1`,
-      [acte.type],
-    );
-    const niveauRequis = modele?.niveau_validation_requis ?? 'CLERC';
-    if (!peutValider(currentUser.role, niveauRequis)) {
-      throw new ForbiddenException(
-        `Ce type d'acte necessite une validation de niveau ${niveauRequis === 'HUISSIER' ? 'Huissier' : 'Clerc ou Huissier'}.`,
-      );
+    if (!peutValider(currentUser.role)) {
+      throw new ForbiddenException("Seul l'Huissier peut valider un acte.");
     }
 
     const pdfBuffer = await this.pdfService.genererPdfDepuisHtml(acte.corps_html);
@@ -399,14 +383,8 @@ export class ActesService {
     if (acte.statut_validation !== 'EN_ATTENTE_VALIDATION') {
       throw new BadRequestException("Cet acte n'est pas en attente de validation.");
     }
-
-    const modele = await this.tenantDb.queryOne<{ niveau_validation_requis: 'CLERC' | 'HUISSIER' }>(
-      `SELECT niveau_validation_requis FROM modeles_actes WHERE type = $1 ORDER BY created_at ASC LIMIT 1`,
-      [acte.type],
-    );
-    const niveauRequis = modele?.niveau_validation_requis ?? 'CLERC';
-    if (!peutValider(currentUser.role, niveauRequis)) {
-      throw new ForbiddenException('Vous n\'etes pas autorise a statuer sur cet acte.');
+    if (!peutValider(currentUser.role)) {
+      throw new ForbiddenException("Seul l'Huissier peut rejeter ou demander la correction d'un acte.");
     }
 
     const updated = await this.tenantDb.queryOne(
@@ -492,32 +470,30 @@ export class ActesService {
   // accessible au role courant (un Clerc ne voit que ceux qu'il peut
   // effectivement valider ; un Huissier voit tout).
   async findEnAttenteValidation(currentUser: AuthenticatedUser) {
-    const rows = await this.tenantDb.query<{
+    if (!peutValider(currentUser.role)) {
+      throw new ForbiddenException("Seul l'Huissier peut consulter la file de validation.");
+    }
+
+    return this.tenantDb.query<{
       id: string;
       numero: string;
       type: string;
       soumis_le: string;
       dossier_id: string;
       dossier_numero: string;
-      niveau_validation_requis: 'CLERC' | 'HUISSIER';
-      soumis_par_nom: string;
-      soumis_par_prenom: string;
+      soumis_par_nom: string | null;
+      soumis_par_prenom: string | null;
     }>(
-      `SELECT a.id, a.numero, a.type, a.soumis_le, a.dossier_id, d.numero AS dossier_numero,
-              m.niveau_validation_requis,
+      `SELECT a.id, a.numero, a.type, a.soumis_le, a.dossier_id,
+              d.numero AS dossier_numero,
               u.nom AS soumis_par_nom, u.prenom AS soumis_par_prenom
        FROM actes a
        JOIN dossiers d ON d.id = a.dossier_id
        LEFT JOIN utilisateurs u ON u.id = a.soumis_par
-       LEFT JOIN LATERAL (
-         SELECT niveau_validation_requis FROM modeles_actes WHERE type = a.type ORDER BY created_at ASC LIMIT 1
-       ) m ON true
        WHERE a.statut_validation = 'EN_ATTENTE_VALIDATION'
        ORDER BY a.soumis_le ASC`,
     );
-    return rows.filter((r) => peutValider(currentUser.role, r.niveau_validation_requis ?? 'CLERC'));
   }
-
   async findByDossier(dossierId: string) {
     return this.tenantDb.query(
       `SELECT id, numero, type, date_acte, signe_par, envoye_client_le, signe_client_le, notifie_par, notifie_le,
@@ -710,4 +686,5 @@ function escapeHtml(input: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+
 
