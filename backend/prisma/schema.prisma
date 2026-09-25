@@ -1,0 +1,71 @@
+// Schéma PUBLIC — tables communes à toute la plateforme.
+// Les données propres à chaque cabinet vivent dans un schéma PostgreSQL
+// dédié (cabinet_xxx), provisionné dynamiquement — voir tenant-schema.sql
+// et src/tenant/tenant-provisioning.service.ts
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlanCabinet {
+  ESSAI
+  STANDARD
+  PREMIUM
+}
+
+enum StatutCabinet {
+  ACTIF
+  SUSPENDU
+  RESILIE
+}
+
+model Cabinet {
+  id            String        @id @default(uuid())
+  nom           String
+  slug          String        @unique // identifiant du schéma tenant: cabinet_<slug>
+  email         String        @unique
+  telephone     String?
+  adresse       String?
+  plan          PlanCabinet   @default(ESSAI)
+  statut        StatutCabinet @default(ACTIF)
+  schemaName    String        @unique @map("schema_name")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  @@map("cabinets")
+}
+
+enum RoleSuperAdmin {
+  SUPER_ADMIN
+}
+
+model SuperAdmin {
+  id           String         @id @default(uuid())
+  nom          String
+  email        String         @unique
+  motDePasse   String         @map("mot_de_passe")
+  role         RoleSuperAdmin @default(SUPER_ADMIN)
+  refreshToken String?        @map("refresh_token")
+  createdAt    DateTime       @default(now()) @map("created_at")
+
+  @@map("super_admins")
+}
+
+// Journal d'audit centralisé (accès du Super Admin aux cabinets, actions sensibles)
+model AuditLog {
+  id         String   @id @default(uuid())
+  acteur     String // email ou id de l'utilisateur/super admin
+  cabinetId  String?  @map("cabinet_id")
+  action     String
+  details    Json?
+  ip         String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+  @@index([cabinetId])
+}

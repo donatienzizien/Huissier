@@ -1,0 +1,61 @@
+﻿# Dépendances Node.js
+node_modules/
+**/node_modules/
+
+# Fichiers de configuration secrets
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+
+# Builds
+dist/
+**/dist/
+build/
+**/build/
+coverage/
+**/coverage/
+
+# Journaux
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Fichiers TypeScript
+*.tsbuildinfo
+
+# Données et fichiers utilisateurs
+storage/
+**/storage/
+uploads/
+**/uploads/
+
+# Systèmes et éditeurs
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Archives, sauvegardes, fichiers temporaires
+*.zip
+*.bak
+*.tmp
+backup-*/
+**/backup-*/
+
+# Bases de donnees, dumps et fichiers de secrets
+*.sql.bak
+*.dump
+*.dump.gz
+*.sqlite
+*.sqlite3
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+**/secrets/

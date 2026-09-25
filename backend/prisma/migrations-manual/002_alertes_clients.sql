@@ -1,0 +1,2 @@
+﻿ALTER TABLE factures ADD COLUMN IF NOT EXISTS alerte_echeance_envoyee BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE factures ADD COLUMN IF NOT EXISTS alerte_retard_derniere_le TIMESTAMPTZ;

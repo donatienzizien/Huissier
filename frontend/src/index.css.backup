@@ -1,0 +1,42 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply text-navy-900 font-sans antialiased;
+  background: linear-gradient(180deg, #FBF6E9 0%, #F3F0E8 100%);
+  background-attachment: fixed;
+}
+
+::selection {
+  @apply bg-brass-100 text-navy-900;
+}
+
+/* Chiffres et rÃ©fÃ©rences (numÃ©ros de dossier, d'acte, de facture) en mono */
+.font-ref {
+  @apply font-mono tracking-tight;
+}
+/* Styles de base pour le contenu edite dans EditeurActe.tsx (Tiptap) */
+.editeur-acte-contenu {
+  font-family: Georgia, serif;
+  font-size: 12pt;
+  color: #1b2c4a;
+  line-height: 1.6;
+  min-height: 200px;
+}
+.editeur-acte-contenu h2 {
+  font-size: 14pt;
+  font-weight: bold;
+  margin-top: 1em;
+}
+.editeur-acte-contenu p {
+  margin: 0.6em 0;
+}
+.editeur-acte-contenu ul, .editeur-acte-contenu ol {
+  padding-left: 1.5em;
+  margin: 0.6em 0;
+}
+
+
