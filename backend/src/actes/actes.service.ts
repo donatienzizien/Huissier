@@ -199,11 +199,13 @@ export class ActesService {
     return { html: compiled(donneesFusion) };
   }
 
-  // Cree un acte en BROUILLON : aucun PDF/DOCX officiel n'est genere a ce
-  // stade. Le corps (corps_html) est soit celui fourni par l'utilisateur
-  // (deja edite depuis l'apercu), soit calcule automatiquement par fusion
-  // du gabarit (chemin retro-compatible sans apercu prealable).
-  async create(dto: CreateActeDto, utilisateurId: string) {
+  // Cree un acte. Pour un Clerc ou une Secretaire, l'acte reste en
+  // BROUILLON et devra etre soumis a l'Huissier. Pour l'Huissier lui-meme,
+  // l'acte est cree puis valide immediatement : PDF/DOCX officiels sont
+  // generes sans passer par la file de validation.
+  async create(dto: CreateActeDto, currentUser: AuthenticatedUser) {
+    const utilisateurId = currentUser.sub;
+
     const modele = (await this.modelesActesService.findOne(dto.modeleId)) as {
       id: string;
       type: string;
@@ -222,21 +224,70 @@ export class ActesService {
     const corpsHtml =
       dto.corpsHtml ?? Handlebars.compile(modele.template_html, { noEscape: false })(donneesFusion);
 
-    return this.tenantDb.transaction(async (client_) => {
+    const acte = await this.tenantDb.transaction(async (client_) => {
       const acteResult = await client_.query(
-        `INSERT INTO actes (numero, type, dossier_id, contenu, corps_html, statut_validation, signe_par, date_acte)
-         VALUES ($1,$2,$3,$4,$5,'BROUILLON',$6,now()) RETURNING *`,
-        [numero, modele.type, dto.dossierId, JSON.stringify(donneesFusion), corpsHtml, utilisateurId],
+        `INSERT INTO actes (
+           numero, type, dossier_id, contenu, corps_html, statut_validation,
+           signe_par, soumis_par, soumis_le, date_acte
+         )
+         VALUES (
+           $1, $2, $3, $4, $5,
+           (CASE WHEN $7 = 'HUISSIER' THEN 'EN_ATTENTE_VALIDATION' ELSE 'BROUILLON' END)::statut_validation_acte,
+           $6,
+           CASE WHEN $7 = 'HUISSIER' THEN $8::uuid ELSE NULL END,
+           CASE WHEN $7 = 'HUISSIER' THEN now() ELSE NULL END,
+           now()
+         )
+         RETURNING *`,
+        [
+          numero,
+          modele.type,
+          dto.dossierId,
+          JSON.stringify(donneesFusion),
+          corpsHtml,
+          utilisateurId,
+          currentUser.role,
+          utilisateurId,
+        ],
       );
+
+      const cree = acteResult.rows[0];
+
       await client_.query(
         `INSERT INTO dossier_historique (dossier_id, utilisateur_id, action, details)
          VALUES ($1,$2,'ACTE_BROUILLON_CREE',$3)`,
-        [dto.dossierId, utilisateurId, JSON.stringify({ numeroActe: numero, type: modele.type })],
+        [
+          dto.dossierId,
+          utilisateurId,
+          JSON.stringify({
+            numeroActe: numero,
+            type: modele.type,
+            creationParHuissier: currentUser.role === 'HUISSIER',
+          }),
+        ],
       );
-      return acteResult.rows[0];
-    });
-  }
 
+      return cree;
+    });
+
+    if (currentUser.role === 'HUISSIER') {
+      const valide = await this.valider(acte.id, currentUser);
+
+      await this.tenantDb.query(
+        `INSERT INTO dossier_historique (dossier_id, utilisateur_id, action, details)
+         VALUES ($1,$2,'ACTE_CREE_ET_VALIDE_PAR_HUISSIER',$3)`,
+        [
+          dto.dossierId,
+          utilisateurId,
+          JSON.stringify({ numeroActe: numero, type: modele.type }),
+        ],
+      );
+
+      return valide;
+    }
+
+    return acte;
+  }
   // Met a jour le corps HTML d'un brouillon existant (edition libre
   // continue). Refuse si l'acte n'est plus au stade BROUILLON.
   async modifierBrouillon(id: string, dto: UpdateBrouillonDto, utilisateurId: string) {
@@ -494,6 +545,65 @@ export class ActesService {
        ORDER BY a.soumis_le ASC`,
     );
   }
+  async findAgentsActifs() {
+    return this.tenantDb.query<{
+      id: string;
+      nom: string;
+      prenom: string;
+      role: string;
+    }>(
+      `SELECT id, nom, prenom, role
+       FROM utilisateurs
+       WHERE actif = true
+         AND role IN ('HUISSIER', 'CLERC', 'AGENT_TERRAIN')
+       ORDER BY nom, prenom`,
+    );
+  }
+  async findValides(signes = false) {
+    return this.tenantDb.query<{
+      id: string;
+      numero: string;
+      type: string;
+      dossier_id: string;
+      dossier_numero: string;
+      valide_le: string | null;
+      envoye_client_le: string | null;
+      signe_client_le: string | null;
+      notifie_le: string | null;
+      notifie_par: string | null;
+      notifie_par_nom: string | null;
+      notifie_par_prenom: string | null;
+      pdf_disponible: boolean;
+      docx_disponible: boolean;
+    }>(
+      `SELECT
+         a.id,
+         a.numero,
+         a.type,
+         a.dossier_id,
+         d.numero AS dossier_numero,
+         a.valide_le,
+         a.envoye_client_le,
+         a.signe_client_le,
+         a.notifie_le,
+         a.notifie_par,
+         n.nom AS notifie_par_nom,
+         n.prenom AS notifie_par_prenom,
+         (a.pdf_path IS NOT NULL) AS pdf_disponible,
+         (a.docx_path IS NOT NULL) AS docx_disponible
+       FROM actes a
+       JOIN dossiers d ON d.id = a.dossier_id
+       LEFT JOIN utilisateurs n ON n.id = a.notifie_par
+       WHERE a.statut_validation = 'VALIDE'::statut_validation_acte
+         AND (
+           ($1::boolean = true AND a.signe_client_le IS NOT NULL)
+           OR
+           ($1::boolean = false AND a.signe_client_le IS NULL)
+         )
+       ORDER BY COALESCE(a.signe_client_le, a.valide_le) DESC NULLS LAST, a.date_acte DESC`,
+      [signes],
+    );
+  }
   async findByDossier(dossierId: string) {
     return this.tenantDb.query(
       `SELECT id, numero, type, date_acte, signe_par, envoye_client_le, signe_client_le, notifie_par, notifie_le,
@@ -686,5 +796,17 @@ function escapeHtml(input: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 

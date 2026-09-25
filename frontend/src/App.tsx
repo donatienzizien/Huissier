@@ -1,25 +1,27 @@
-﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import DossiersList from './pages/dossiers/DossiersList';
-import DossierDetail from './pages/dossiers/DossierDetail';
-import ClientsList from './pages/clients/ClientsList';
-import ClientDetail from './pages/clients/ClientDetail';
-import ActesList from './pages/actes/ActesList';
-import ActesAValider from './pages/actes/ActesAValider';
-import FacturesList from './pages/facturation/FacturesList';
-import FactureDetail from './pages/facturation/FactureDetail';
-import Agenda from './pages/agenda/Agenda';
-import Rapports from './pages/rapports/Rapports';
-import Administration from './pages/administration/Administration';
-import ParametresCabinet from './pages/administration/ParametresCabinet';
-import UsersList from './pages/utilisateurs/UsersList';
-import ProfilPersonnel from './pages/profil/ProfilPersonnel';
-import PortailLogin from './pages/portail/PortailLogin';
-import PortailDashboard from './pages/portail/PortailDashboard';
-import PortailDossierDetail from './pages/portail/PortailDossierDetail';
-import SuperAdminLogin from './pages/super-admin/SuperAdminLogin';
-import SuperAdminDashboard from './pages/super-admin/SuperAdminDashboard';
+﻿import { lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+const Login = lazy(() => import('./pages/Login'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const DossiersList = lazy(() => import('./pages/dossiers/DossiersList'));
+const DossierDetail = lazy(() => import('./pages/dossiers/DossierDetail'));
+const ClientsList = lazy(() => import('./pages/clients/ClientsList'));
+const ClientDetail = lazy(() => import('./pages/clients/ClientDetail'));
+const ActesList = lazy(() => import('./pages/actes/ActesList'));
+const ActesAValider = lazy(() => import('./pages/actes/ActesAValider'));
+const FacturesList = lazy(() => import('./pages/facturation/FacturesList'));
+const FactureDetail = lazy(() => import('./pages/facturation/FactureDetail'));
+const Agenda = lazy(() => import('./pages/agenda/Agenda'));
+const Rapports = lazy(() => import('./pages/rapports/Rapports'));
+const Administration = lazy(() => import('./pages/administration/Administration'));
+const ParametresCabinet = lazy(() => import('./pages/administration/ParametresCabinet'));
+const UsersList = lazy(() => import('./pages/utilisateurs/UsersList'));
+const ProfilPersonnel = lazy(() => import('./pages/profil/ProfilPersonnel'));
+const PortailLogin = lazy(() => import('./pages/portail/PortailLogin'));
+const PortailDashboard = lazy(() => import('./pages/portail/PortailDashboard'));
+const PortailDossierDetail = lazy(() => import('./pages/portail/PortailDossierDetail'));
+const SuperAdminLogin = lazy(() => import('./pages/super-admin/SuperAdminLogin'));
+const SuperAdminDashboard = lazy(() => import('./pages/super-admin/SuperAdminDashboard'));
 import DashboardLayout from './layouts/DashboardLayout';
 import PortailLayout from './layouts/PortailLayout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -29,7 +31,26 @@ import SuperAdminRoute from './components/SuperAdminRoute';
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
+      <Suspense
+        fallback={
+          <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-50">
+            <div
+              className="h-10 w-10 animate-spin rounded-full border-4 border-navy-100 border-t-navy-700"
+              role="status"
+              aria-label="Chargement de la page"
+            />
+            <div className="text-center">
+              <p className="text-sm font-semibold text-navy-800">
+                Chargement de la page...
+              </p>
+              <p className="mt-1 text-xs text-gray-500">
+                Veuillez patienter un instant.
+              </p>
+            </div>
+          </div>
+        }
+      >
+        <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/portail/login" element={<PortailLogin />} />
         <Route path="/super-admin/login" element={<SuperAdminLogin />} />
@@ -68,8 +89,13 @@ export default function App() {
         </Route>
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
+
+
+
+
 

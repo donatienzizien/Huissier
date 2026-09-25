@@ -17,6 +17,8 @@ import {
   Pencil,
   UserCheck,
   UserCog,
+  XCircle,
+  Send,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { telechargerActePdf } from '../../lib/pdf';
@@ -87,6 +89,7 @@ export default function DossierDetail() {
   const [showAssignerClerc, setShowAssignerClerc] = useState(false);
   const [showAssignerAgent, setShowAssignerAgent] = useState(false);
   const [assignError, setAssignError] = useState<string | null>(null);
+  const [filtreHistorique, setFiltreHistorique] = useState<'TOUS' | 'ACTES' | 'DOSSIER'>('TOUS');
   const user = useAuthStore((s) => s.user);
   const estHuissier = user?.role === 'HUISSIER';
   const peutModifierDossier = user?.role === 'HUISSIER' || user?.role === 'CLERC';
@@ -433,6 +436,53 @@ export default function DossierDetail() {
                         )}
                       </div>
                     </div>
+
+                    {a.statut_validation === 'VALIDE' && (
+                      <div className="mt-2 ml-0.5 border-l-2 border-gray-200 pl-3 space-y-1.5 text-xs">
+                        {a.valide_le && (
+                          <div className="flex items-center gap-2 text-green-700">
+                            <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                            <span>
+                              <span className="font-medium">Acte validé</span>
+                              <span className="text-gray-500"> — {new Date(a.valide_le).toLocaleString('fr-FR')}</span>
+                            </span>
+                          </div>
+                        )}
+
+                        {a.envoye_client_le && (
+                          <div className="flex items-center gap-2 text-blue-700">
+                            <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                            <span>
+                              <span className="font-medium">Envoyé au client</span>
+                              <span className="text-gray-500"> — {new Date(a.envoye_client_le).toLocaleString('fr-FR')}</span>
+                            </span>
+                          </div>
+                        )}
+
+                        {a.signe_client_le && (
+                          <div className="flex items-center gap-2 text-green-700">
+                            <span className="w-2 h-2 rounded-full bg-green-600 shrink-0" />
+                            <span>
+                              <span className="font-medium">Signé par le client</span>
+                              <span className="text-gray-500"> — {new Date(a.signe_client_le).toLocaleString('fr-FR')}</span>
+                            </span>
+                          </div>
+                        )}
+
+                        {a.notifie_le && (
+                          <div className="flex items-center gap-2 text-purple-700">
+                            <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+                            <span>
+                              <span className="font-medium">
+                                Notifié par {[a.notifie_par_prenom, a.notifie_par_nom].filter(Boolean).join(' ') || 'Agent non renseigné'}
+                              </span>
+                              <span className="text-gray-500"> — {new Date(a.notifie_le).toLocaleString('fr-FR')}</span>
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                     {estLettreClient && (
                       <div className="mt-1.5 flex items-center gap-2">
                         {a.signe_client_le ? (
@@ -609,24 +659,96 @@ export default function DossierDetail() {
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 p-5 mt-6">
-        <h2 className="text-sm font-semibold text-navy-900 mb-3">Historique</h2>
-        <ul className="space-y-3 text-sm">
-          {dossier.historique.map((h) => (
-            <li key={h.id} className="border-l-2 border-navy-100 pl-3">
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-navy-900">{formatAction(h.action)}</span>
-                <span className="text-gray-400 text-xs">
-                  {new Date(h.created_at).toLocaleString('fr-FR')}
-                </span>
-              </div>
-              {h.utilisateur_nom && (
-                <p className="text-gray-500 text-xs">
-                  par {h.utilisateur_nom} {h.utilisateur_prenom ?? ''}
-                </p>
-              )}
-            </li>
-          ))}
-        </ul>
+        <div className="flex items-center justify-between gap-3 mb-3">
+          <h2 className="text-sm font-semibold text-navy-900">Historique</h2>
+
+          <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1">
+            {(() => {
+              const compteurs = compterHistorique(dossier.historique);
+
+              return [
+                ['TOUS', 'Tous'],
+                ['ACTES', 'Actes'],
+                ['DOSSIER', 'Dossier'],
+              ].map(([valeur, libelle]) => (
+                <button
+                  key={valeur}
+                  type="button"
+                  onClick={() => setFiltreHistorique(valeur as 'TOUS' | 'ACTES' | 'DOSSIER')}
+                  className={`rounded-md px-2 py-1 text-xs font-medium transition-colors ${
+                    filtreHistorique === valeur
+                      ? 'bg-white text-navy-800 shadow-sm'
+                      : 'text-gray-500 hover:text-navy-700'
+                  }`}
+                >
+                  {libelle} ({compteurs[valeur as 'TOUS' | 'ACTES' | 'DOSSIER']})
+                </button>
+              ));
+            })()}
+          </div>
+        </div>
+        {dossier.historique.filter((h) => {
+          if (filtreHistorique === 'TOUS') return true;
+          if (filtreHistorique === 'ACTES') return h.action.startsWith('ACTE_');
+          return !h.action.startsWith('ACTE_');
+        }).length === 0 ? (
+          <p className="text-sm text-gray-400 py-3">
+            {filtreHistorique === 'ACTES'
+              ? 'Aucun événement lié aux actes.'
+              : filtreHistorique === 'DOSSIER'
+                ? 'Aucun événement général du dossier.'
+                : 'Aucun événement dans l’historique.'}
+          </p>
+        ) : (
+          <ul className="space-y-3 text-sm">
+            {dossier.historique
+            .filter((h) => {
+              if (filtreHistorique === 'TOUS') return true;
+              if (filtreHistorique === 'ACTES') return h.action.startsWith('ACTE_');
+              return !h.action.startsWith('ACTE_');
+            })
+            .map((h) => {
+            const style = styleHistorique(h.action);
+            const Icon = style.Icon;
+            const detail = detailHistorique(h.action, h.details);
+
+            return (
+              <li
+                key={h.id}
+                className={`border-l-2 ${style.border} ${style.background} rounded-r-md px-3 py-2`}
+              >
+                <div className="flex items-center gap-2">
+                  <Icon size={15} className={style.iconColor} />
+
+                  <span className="font-medium text-navy-900">
+                    {formatHistorique(h.action, h.details)}
+                  </span>
+
+                  <span className="text-gray-400 text-xs ml-auto shrink-0">
+                    {new Date(h.created_at).toLocaleString('fr-FR')}
+                  </span>
+                </div>
+
+                {h.utilisateur_nom && (
+                  <p className="text-gray-500 text-xs ml-[23px] mt-0.5">
+                    par {h.utilisateur_nom} {h.utilisateur_prenom ?? ''}
+                  </p>
+                )}
+
+                {detail && (
+
+                  <p className="text-red-700 text-xs ml-[23px] mt-1">
+
+                    {detail}
+
+                  </p>
+
+                )}
+              </li>
+            );
+          })}
+          </ul>
+        )}
       </div>
 
       {showGenererActe && (
@@ -690,18 +812,152 @@ export default function DossierDetail() {
   );
 }
 
+function compterHistorique(actions: Array<{ action: string }>) {
+  const total = actions.length;
+  const actes = actions.filter((entree) => entree.action.startsWith('ACTE_')).length;
+
+  return {
+    TOUS: total,
+    ACTES: actes,
+    DOSSIER: total - actes,
+  };
+}
+function styleHistorique(action: string) {
+  switch (action) {
+    case 'ACTE_VALIDE':
+    case 'ACTE_CREE_ET_VALIDE_PAR_HUISSIER':
+      return {
+        border: 'border-green-200',
+        background: 'bg-green-50',
+        iconColor: 'text-green-700',
+        Icon: CheckCircle2,
+      };
+
+    case 'ACTE_ENVOYE_CLIENT':
+      return {
+        border: 'border-blue-200',
+        background: 'bg-blue-50',
+        iconColor: 'text-blue-700',
+        Icon: Send,
+      };
+
+    case 'ACTE_SIGNE_CLIENT':
+      return {
+        border: 'border-emerald-200',
+        background: 'bg-emerald-50',
+        iconColor: 'text-emerald-700',
+        Icon: CheckCircle2,
+      };
+
+    case 'ACTE_NOTIFIE':
+      return {
+        border: 'border-purple-200',
+        background: 'bg-purple-50',
+        iconColor: 'text-purple-700',
+        Icon: UserCheck,
+      };
+
+    case 'ACTE_REJETE':
+      return {
+        border: 'border-red-200',
+        background: 'bg-red-50',
+        iconColor: 'text-red-700',
+        Icon: XCircle,
+      };
+
+    case 'ACTE_SOUMIS_VALIDATION':
+      return {
+        border: 'border-brass-200',
+        background: 'bg-brass-50',
+        iconColor: 'text-brass-700',
+        Icon: Clock,
+      };
+
+    default:
+      return {
+        border: 'border-navy-100',
+        background: 'bg-white',
+        iconColor: 'text-navy-600',
+        Icon: Clock,
+      };
+  }
+}
+function detailHistorique(action: string, details: Record<string, unknown> | null) {
+  if (action === 'ACTE_REJETE' && typeof details?.motif === 'string' && details.motif.trim()) {
+    return `Motif : ${details.motif}`;
+  }
+
+  return null;
+}
+function formatHistorique(action: string, details: Record<string, unknown> | null) {
+  const numeroActe = typeof details?.numeroActe === 'string' ? details.numeroActe : null;
+  const agent = typeof details?.agent === 'string' ? details.agent : null;
+
+  const suffixeActe = numeroActe ? ` ${numeroActe}` : '';
+
+  switch (action) {
+    case 'ACTE_ENVOYE_CLIENT':
+      return `Acte${suffixeActe} envoyé au client`;
+
+    case 'ACTE_SIGNE_CLIENT':
+      return `Acte${suffixeActe} signé par le client`;
+
+    case 'ACTE_NOTIFIE':
+      return agent
+        ? `Acte${suffixeActe} notifié par ${agent}`
+        : `Acte${suffixeActe} notifié`;
+
+    default:
+      return formatAction(action);
+  }
+}
+
 function formatAction(action: string) {
   switch (action) {
     case 'CREATION':
-      return 'Dossier cree';
+      return 'Dossier créé';
+
     case 'CHANGEMENT_STATUT':
-      return 'Changement de statut';
+      return 'Statut du dossier modifié';
+
     case 'CHANGEMENT_TIERS':
-      return 'Client / debiteur modifie';
+      return 'Client ou débiteur modifié';
+
+    case 'ACTE_BROUILLON_CREE':
+      return 'Brouillon d’acte créé';
+
+    case 'ACTE_CREE_ET_VALIDE_PAR_HUISSIER':
+      return 'Acte créé et validé par l’huissier';
+
+    case 'ACTE_BROUILLON_MODIFIE':
+      return 'Brouillon d’acte modifié';
+
+    case 'ACTE_CORRIGE_PAR_VALIDATEUR':
+      return 'Acte corrigé par le validateur';
+
+    case 'ACTE_SOUMIS_VALIDATION':
+      return 'Acte soumis à validation';
+
+    case 'ACTE_VALIDE':
+      return 'Acte validé';
+
+    case 'ACTE_REJETE':
+      return 'Acte rejeté';
+
+    case 'ACTE_ENVOYE_CLIENT':
+      return 'Acte envoyé au client';
+
+    case 'ACTE_SIGNE_CLIENT':
+      return 'Acte signé par le client';
+
     case 'ACTE_NOTIFIE':
-      return 'Acte notifie';
+      return 'Acte notifié';
+
     default:
-      return action;
+      return action
+        .replace(/_/g, ' ')
+        .toLowerCase()
+        .replace(/^\w/, (letter: string) => letter.toUpperCase());
   }
 }
 
@@ -949,6 +1205,32 @@ function AssignerModal({
     </Modal>
   );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

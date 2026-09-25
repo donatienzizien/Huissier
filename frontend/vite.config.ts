@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+﻿import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
@@ -16,10 +16,14 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'state-http': ['axios', 'zustand'],
           recharts: ['recharts'],
-          vendor: ['react', 'react-dom', 'react-router-dom', 'axios', 'zustand'],
+          icons: ['lucide-react'],
         },
       },
     },
   },
 });
+
+

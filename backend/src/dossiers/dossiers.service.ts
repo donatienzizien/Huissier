@@ -202,7 +202,7 @@ export class DossiersService {
         [id],
       ),
       this.tenantDb.query(
-        `SELECT a.id, a.numero, a.type, a.date_acte, a.envoye_client_le, a.signe_client_le,
+        `SELECT a.id, a.numero, a.type, a.date_acte, a.valide_le, a.envoye_client_le, a.signe_client_le,
                 a.notifie_par, a.notifie_le,
                 u.nom AS notifie_par_nom, u.prenom AS notifie_par_prenom
          FROM actes a
@@ -412,6 +412,8 @@ export class DossiersService {
     return { id, numero: dossier.numero, supprime: true };
   }
 }
+
+
 
 
 
