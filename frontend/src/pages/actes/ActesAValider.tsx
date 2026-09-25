@@ -5,7 +5,7 @@ import { api } from '../../lib/api';
 import { validerActe, rejeterActe, getActe, corrigerActeEnAttente } from '../../lib/actes';
 import { separerStyleEtCorps, recombinerDocument } from '../../lib/actes';
 import { ActeAValider, LABELS_TYPE_ACTE } from '../../types';
-import { SOLID, TINT_BG, TINT_TEXT, BORDER_TOP } from '../../lib/theme';
+import { SOLID, BORDER_TOP } from '../../lib/theme';
 import PageHeader from '../../components/PageHeader';
 import Modal from '../../components/Modal';
 import EditeurActe from '../../components/EditeurActe';
@@ -90,11 +90,8 @@ export default function ActesAValider() {
               <div className="min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-nums font-semibold text-navy-900">{a.numero}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TINT_BG.brass} ${TINT_TEXT.brass}`}>
+                  <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-brass-50 text-brass-700">
                     {LABELS_TYPE_ACTE[a.type]}
-                  </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${a.niveau_validation_requis === 'HUISSIER' ? `${TINT_BG.wine} ${TINT_TEXT.wine}` : `${TINT_BG.navy} ${TINT_TEXT.navy}`}`}>
-                    Niveau {a.niveau_validation_requis === 'HUISSIER' ? 'Huissier' : 'Clerc'}
                   </span>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
@@ -270,3 +267,5 @@ function CorrigerModal({
     </div>
   );
 }
+
+

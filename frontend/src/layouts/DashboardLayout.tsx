@@ -23,7 +23,7 @@ const navItems = [
   { to: '/dashboard', label: 'Tableau de bord', icon: LayoutDashboard, roles: ['HUISSIER', 'CLERC', 'COMPTABLE', 'SECRETAIRE', 'AGENT_TERRAIN'] },
   { to: '/dossiers', label: 'Dossiers', icon: FolderOpen, roles: ['HUISSIER', 'CLERC', 'COMPTABLE', 'SECRETAIRE', 'AGENT_TERRAIN'] },
   { to: '/actes', label: 'Actes', icon: FileText, roles: ['HUISSIER', 'CLERC'] },
-  { to: '/actes/a-valider', label: 'Actes a valider', icon: ClipboardCheck, roles: ['HUISSIER', 'CLERC'] },
+  { to: '/actes/a-valider', label: 'Actes a valider', icon: ClipboardCheck, roles: ['HUISSIER'] },
   { to: '/clients', label: 'Clients', icon: Users, roles: ['HUISSIER', 'CLERC', 'COMPTABLE'] },
   { to: '/debiteurs', label: 'Debiteurs', icon: UserX, roles: ['HUISSIER', 'CLERC', 'COMPTABLE'] },
   { to: '/facturation', label: 'Facturation', icon: Receipt, roles: ['HUISSIER', 'COMPTABLE'] },
@@ -99,4 +99,5 @@ export default function DashboardLayout() {
     </div>
   );
 }
+
 

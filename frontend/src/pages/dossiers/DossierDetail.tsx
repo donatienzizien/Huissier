@@ -88,6 +88,8 @@ export default function DossierDetail() {
   const [showAssignerAgent, setShowAssignerAgent] = useState(false);
   const [assignError, setAssignError] = useState<string | null>(null);
   const user = useAuthStore((s) => s.user);
+  const estHuissier = user?.role === 'HUISSIER';
+  const peutModifierDossier = user?.role === 'HUISSIER' || user?.role === 'CLERC';
 
   const [piecesJointes, setPiecesJointes] = useState<PieceJointe[]>([]);
   const [loadingPj, setLoadingPj] = useState(true);
@@ -285,14 +287,18 @@ export default function DossierDetail() {
                   </Link>
                 </>
               )}
-              {' '}
-              <button
-                onClick={() => setShowCorrigerTiers(true)}
-                className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-navy-700 ml-1"
-                title="Corriger le client / debiteur"
-              >
-                <Pencil size={11} />
-              </button>
+              {estHuissier && (
+                <>
+                  {' '}
+                  <button
+                    onClick={() => setShowCorrigerTiers(true)}
+                    className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-navy-700 ml-1"
+                    title="Corriger le client / debiteur"
+                  >
+                    <Pencil size={11} />
+                  </button>
+                </>
+              )}
             </p>
             <div className="mt-2 flex items-center gap-2 flex-wrap">
               <Badge statut={dossier.statut} label={LABELS_STATUT_DOSSIER[dossier.statut]} />
@@ -327,7 +333,7 @@ export default function DossierDetail() {
           </div>
         </div>
 
-        {TRANSITIONS[dossier.statut].length > 0 && (
+        {peutModifierDossier && TRANSITIONS[dossier.statut].length > 0 && (
           <div className="flex gap-2">
             {TRANSITIONS[dossier.statut].map((next) => (
               <button
@@ -400,14 +406,16 @@ export default function DossierDetail() {
                         )}
                         {a.statut_validation === 'VALIDE' && (
                           <>
-                            <button
-                              disabled={busy}
-                              onClick={() => handleEnvoyerClient(a.id)}
-                              className="flex items-center gap-1 text-navy-700 hover:underline text-xs disabled:opacity-50"
-                              title="Envoyer par email au client"
-                            >
-                              <Mail size={13} /> Envoyer
-                            </button>
+                            {estHuissier && (
+                              <button
+                                disabled={busy}
+                                onClick={() => handleEnvoyerClient(a.id)}
+                                className="flex items-center gap-1 text-navy-700 hover:underline text-xs disabled:opacity-50"
+                                title="Envoyer par email au client"
+                              >
+                                <Mail size={13} /> Envoyer
+                              </button>
+                            )}
                             <button
                               onClick={() => telechargerActePdf(a.id, a.numero)}
                               className="flex items-center gap-1 text-navy-700 hover:underline text-xs"
@@ -436,13 +444,15 @@ export default function DossierDetail() {
                             <span className="inline-flex items-center gap-1 text-xs text-brass-700 bg-brass-50 border border-brass-200 rounded-full px-2 py-0.5">
                               <Clock size={11} /> Envoyee le {new Date(a.envoye_client_le).toLocaleDateString('fr-FR')} — en attente de signature
                             </span>
-                            <button
-                              disabled={busy}
-                              onClick={() => handleMarquerSigne(a.id)}
-                              className="text-xs text-navy-700 hover:underline disabled:opacity-50"
-                            >
-                              Marquer signee
-                            </button>
+                            {estHuissier && (
+                              <button
+                                disabled={busy}
+                                onClick={() => handleMarquerSigne(a.id)}
+                                className="text-xs text-navy-700 hover:underline disabled:opacity-50"
+                              >
+                                Marquer signee
+                              </button>
+                            )}
                           </>
                         ) : (
                           <span className="inline-flex items-center gap-1 text-xs text-gray-500 bg-gray-100 border border-gray-200 rounded-full px-2 py-0.5">
@@ -458,7 +468,7 @@ export default function DossierDetail() {
                             <UserCheck size={11} /> Notifie par {a.notifie_par_nom} {a.notifie_par_prenom} le{' '}
                             {a.notifie_le ? new Date(a.notifie_le).toLocaleDateString('fr-FR') : ''}
                           </span>
-                        ) : (
+                        ) : estHuissier ? (
                           <button
                             disabled={busy}
                             onClick={() => setNotifierActeId(a.id)}
@@ -466,10 +476,11 @@ export default function DossierDetail() {
                           >
                             <UserCheck size={11} /> Marquer notifie
                           </button>
+                        ) : (
+                          <span className="text-xs text-gray-300">Non notifie</span>
                         )}
                       </div>
-                    )}
-                    {a.motif_rejet && a.statut_validation === 'BROUILLON' && (
+                    )}                    {a.motif_rejet && a.statut_validation === 'BROUILLON' && (
                       <p className="mt-1.5 text-xs text-wine-600 bg-wine-50 border border-wine-100 rounded-md px-2 py-1">
                         Rejete : {a.motif_rejet}
                       </p>
@@ -779,12 +790,20 @@ function CorrigerTiersModal({
       setError('Le dossier doit avoir un client.');
       return;
     }
+    if (!debiteur) {
+      setError('Le dossier doit obligatoirement avoir un debiteur.');
+      return;
+    }
+    if (client.id === debiteur.id) {
+      setError('Le client mandant et le debiteur doivent etre deux fiches distinctes.');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       await api.patch(`/dossiers/${dossier.id}/tiers`, {
         clientId: client.id,
-        debiteurId: debiteur ? debiteur.id : null,
+        debiteurId: debiteur.id,
       });
       onSaved();
     } catch (err: any) {
@@ -813,7 +832,7 @@ function CorrigerTiersModal({
 
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            Debiteur (poursuivi) <span className="text-gray-400 font-normal">(optionnel)</span>
+            Debiteur (poursuivi)
           </label>
           {debiteur ? (
             <div className="flex items-center justify-between rounded-lg border border-wine-200 bg-wine-50 px-3 py-2 text-sm">
@@ -930,5 +949,13 @@ function AssignerModal({
     </Modal>
   );
 }
+
+
+
+
+
+
+
+
 
 

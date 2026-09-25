@@ -239,7 +239,6 @@ export interface ActeAValider {
   soumis_le: string;
   dossier_id: string;
   dossier_numero: string;
-  niveau_validation_requis: NiveauValidation;
   soumis_par_nom?: string;
   soumis_par_prenom?: string;
 }
@@ -431,6 +430,7 @@ export interface PaginatedResult<T> {
   data: T[];
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }
+
 
 
 
