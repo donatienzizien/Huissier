@@ -69,3 +69,10 @@ backups/
 # Rapports locaux d'audit
 backend/audit-workflow-*.txt
 backend/details-workflow-*.txt
+
+# Rapports locaux frontend
+frontend/audit-frontend-workflow-*.txt
+
+# Rapports locaux frontend
+frontend/audit-frontend-workflow-*.txt
+frontend/verification-*.txt
