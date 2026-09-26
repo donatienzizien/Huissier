@@ -1,5 +1,5 @@
 ﻿import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 const Login = lazy(() => import('./pages/Login'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -22,6 +22,7 @@ const PortailDashboard = lazy(() => import('./pages/portail/PortailDashboard'));
 const PortailDossierDetail = lazy(() => import('./pages/portail/PortailDossierDetail'));
 const SuperAdminLogin = lazy(() => import('./pages/super-admin/SuperAdminLogin'));
 const SuperAdminDashboard = lazy(() => import('./pages/super-admin/SuperAdminDashboard'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 import DashboardLayout from './layouts/DashboardLayout';
 import PortailLayout from './layouts/PortailLayout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -88,12 +89,15 @@ export default function App() {
           <Route path="/super-admin" element={<SuperAdminDashboard />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </BrowserRouter>
   );
 }
+
+
+
 
 
 
