@@ -18,10 +18,8 @@ import { MarquerNotifieDto } from './dto/marquer-notifie.dto';
 
 const STORAGE_ROOT = process.env.ACTES_STORAGE_PATH ?? join(process.cwd(), 'storage');
 
-function peutValider(role: string, niveauRequis: 'CLERC' | 'HUISSIER'): boolean {
-  if (role === 'HUISSIER') return true;
-  if (role === 'CLERC') return niveauRequis === 'CLERC';
-  return false;
+function peutValider(role: string): boolean {
+  return role === 'HUISSIER';
 }
 
 @Injectable()
@@ -201,11 +199,13 @@ export class ActesService {
     return { html: compiled(donneesFusion) };
   }
 
-  // Cree un acte en BROUILLON : aucun PDF/DOCX officiel n'est genere a ce
-  // stade. Le corps (corps_html) est soit celui fourni par l'utilisateur
-  // (deja edite depuis l'apercu), soit calcule automatiquement par fusion
-  // du gabarit (chemin retro-compatible sans apercu prealable).
-  async create(dto: CreateActeDto, utilisateurId: string) {
+  // Cree un acte. Pour un Clerc ou une Secretaire, l'acte reste en
+  // BROUILLON et devra etre soumis a l'Huissier. Pour l'Huissier lui-meme,
+  // l'acte est cree puis valide immediatement : PDF/DOCX officiels sont
+  // generes sans passer par la file de validation.
+  async create(dto: CreateActeDto, currentUser: AuthenticatedUser) {
+    const utilisateurId = currentUser.sub;
+
     const modele = (await this.modelesActesService.findOne(dto.modeleId)) as {
       id: string;
       type: string;
@@ -224,21 +224,70 @@ export class ActesService {
     const corpsHtml =
       dto.corpsHtml ?? Handlebars.compile(modele.template_html, { noEscape: false })(donneesFusion);
 
-    return this.tenantDb.transaction(async (client_) => {
+    const acte = await this.tenantDb.transaction(async (client_) => {
       const acteResult = await client_.query(
-        `INSERT INTO actes (numero, type, dossier_id, contenu, corps_html, statut_validation, signe_par, date_acte)
-         VALUES ($1,$2,$3,$4,$5,'BROUILLON',$6,now()) RETURNING *`,
-        [numero, modele.type, dto.dossierId, JSON.stringify(donneesFusion), corpsHtml, utilisateurId],
+        `INSERT INTO actes (
+           numero, type, dossier_id, contenu, corps_html, statut_validation,
+           signe_par, soumis_par, soumis_le, date_acte
+         )
+         VALUES (
+           $1, $2, $3, $4, $5,
+           (CASE WHEN $7 = 'HUISSIER' THEN 'EN_ATTENTE_VALIDATION' ELSE 'BROUILLON' END)::statut_validation_acte,
+           $6,
+           CASE WHEN $7 = 'HUISSIER' THEN $8::uuid ELSE NULL END,
+           CASE WHEN $7 = 'HUISSIER' THEN now() ELSE NULL END,
+           now()
+         )
+         RETURNING *`,
+        [
+          numero,
+          modele.type,
+          dto.dossierId,
+          JSON.stringify(donneesFusion),
+          corpsHtml,
+          utilisateurId,
+          currentUser.role,
+          utilisateurId,
+        ],
       );
+
+      const cree = acteResult.rows[0];
+
       await client_.query(
         `INSERT INTO dossier_historique (dossier_id, utilisateur_id, action, details)
          VALUES ($1,$2,'ACTE_BROUILLON_CREE',$3)`,
-        [dto.dossierId, utilisateurId, JSON.stringify({ numeroActe: numero, type: modele.type })],
+        [
+          dto.dossierId,
+          utilisateurId,
+          JSON.stringify({
+            numeroActe: numero,
+            type: modele.type,
+            creationParHuissier: currentUser.role === 'HUISSIER',
+          }),
+        ],
       );
-      return acteResult.rows[0];
-    });
-  }
 
+      return cree;
+    });
+
+    if (currentUser.role === 'HUISSIER') {
+      const valide = await this.valider(acte.id, currentUser);
+
+      await this.tenantDb.query(
+        `INSERT INTO dossier_historique (dossier_id, utilisateur_id, action, details)
+         VALUES ($1,$2,'ACTE_CREE_ET_VALIDE_PAR_HUISSIER',$3)`,
+        [
+          dto.dossierId,
+          utilisateurId,
+          JSON.stringify({ numeroActe: numero, type: modele.type }),
+        ],
+      );
+
+      return valide;
+    }
+
+    return acte;
+  }
   // Met a jour le corps HTML d'un brouillon existant (edition libre
   // continue). Refuse si l'acte n'est plus au stade BROUILLON.
   async modifierBrouillon(id: string, dto: UpdateBrouillonDto, utilisateurId: string) {
@@ -277,14 +326,8 @@ export class ActesService {
     if (acte.statut_validation !== 'EN_ATTENTE_VALIDATION') {
       throw new BadRequestException("Cet acte n'est pas en attente de validation.");
     }
-
-    const modele = await this.tenantDb.queryOne<{ niveau_validation_requis: 'CLERC' | 'HUISSIER' }>(
-      `SELECT niveau_validation_requis FROM modeles_actes WHERE type = $1 ORDER BY created_at ASC LIMIT 1`,
-      [acte.type],
-    );
-    const niveauRequis = modele?.niveau_validation_requis ?? 'CLERC';
-    if (!peutValider(currentUser.role, niveauRequis)) {
-      throw new ForbiddenException("Vous n'etes pas autorise a corriger cet acte.");
+    if (!peutValider(currentUser.role)) {
+      throw new ForbiddenException("Seul l'Huissier peut corriger un acte soumis.");
     }
 
     const updated = await this.tenantDb.queryOne(
@@ -339,16 +382,8 @@ export class ActesService {
     if (!acte.corps_html) {
       throw new BadRequestException('Contenu de l\'acte manquant.');
     }
-
-    const modele = await this.tenantDb.queryOne<{ niveau_validation_requis: 'CLERC' | 'HUISSIER' }>(
-      `SELECT niveau_validation_requis FROM modeles_actes WHERE type = $1 ORDER BY created_at ASC LIMIT 1`,
-      [acte.type],
-    );
-    const niveauRequis = modele?.niveau_validation_requis ?? 'CLERC';
-    if (!peutValider(currentUser.role, niveauRequis)) {
-      throw new ForbiddenException(
-        `Ce type d'acte necessite une validation de niveau ${niveauRequis === 'HUISSIER' ? 'Huissier' : 'Clerc ou Huissier'}.`,
-      );
+    if (!peutValider(currentUser.role)) {
+      throw new ForbiddenException("Seul l'Huissier peut valider un acte.");
     }
 
     const pdfBuffer = await this.pdfService.genererPdfDepuisHtml(acte.corps_html);
@@ -399,14 +434,8 @@ export class ActesService {
     if (acte.statut_validation !== 'EN_ATTENTE_VALIDATION') {
       throw new BadRequestException("Cet acte n'est pas en attente de validation.");
     }
-
-    const modele = await this.tenantDb.queryOne<{ niveau_validation_requis: 'CLERC' | 'HUISSIER' }>(
-      `SELECT niveau_validation_requis FROM modeles_actes WHERE type = $1 ORDER BY created_at ASC LIMIT 1`,
-      [acte.type],
-    );
-    const niveauRequis = modele?.niveau_validation_requis ?? 'CLERC';
-    if (!peutValider(currentUser.role, niveauRequis)) {
-      throw new ForbiddenException('Vous n\'etes pas autorise a statuer sur cet acte.');
+    if (!peutValider(currentUser.role)) {
+      throw new ForbiddenException("Seul l'Huissier peut rejeter ou demander la correction d'un acte.");
     }
 
     const updated = await this.tenantDb.queryOne(
@@ -492,32 +521,89 @@ export class ActesService {
   // accessible au role courant (un Clerc ne voit que ceux qu'il peut
   // effectivement valider ; un Huissier voit tout).
   async findEnAttenteValidation(currentUser: AuthenticatedUser) {
-    const rows = await this.tenantDb.query<{
+    if (!peutValider(currentUser.role)) {
+      throw new ForbiddenException("Seul l'Huissier peut consulter la file de validation.");
+    }
+
+    return this.tenantDb.query<{
       id: string;
       numero: string;
       type: string;
       soumis_le: string;
       dossier_id: string;
       dossier_numero: string;
-      niveau_validation_requis: 'CLERC' | 'HUISSIER';
-      soumis_par_nom: string;
-      soumis_par_prenom: string;
+      soumis_par_nom: string | null;
+      soumis_par_prenom: string | null;
     }>(
-      `SELECT a.id, a.numero, a.type, a.soumis_le, a.dossier_id, d.numero AS dossier_numero,
-              m.niveau_validation_requis,
+      `SELECT a.id, a.numero, a.type, a.soumis_le, a.dossier_id,
+              d.numero AS dossier_numero,
               u.nom AS soumis_par_nom, u.prenom AS soumis_par_prenom
        FROM actes a
        JOIN dossiers d ON d.id = a.dossier_id
        LEFT JOIN utilisateurs u ON u.id = a.soumis_par
-       LEFT JOIN LATERAL (
-         SELECT niveau_validation_requis FROM modeles_actes WHERE type = a.type ORDER BY created_at ASC LIMIT 1
-       ) m ON true
        WHERE a.statut_validation = 'EN_ATTENTE_VALIDATION'
        ORDER BY a.soumis_le ASC`,
     );
-    return rows.filter((r) => peutValider(currentUser.role, r.niveau_validation_requis ?? 'CLERC'));
   }
-
+  async findAgentsActifs() {
+    return this.tenantDb.query<{
+      id: string;
+      nom: string;
+      prenom: string;
+      role: string;
+    }>(
+      `SELECT id, nom, prenom, role
+       FROM utilisateurs
+       WHERE actif = true
+         AND role IN ('HUISSIER', 'CLERC', 'AGENT_TERRAIN')
+       ORDER BY nom, prenom`,
+    );
+  }
+  async findValides(signes = false) {
+    return this.tenantDb.query<{
+      id: string;
+      numero: string;
+      type: string;
+      dossier_id: string;
+      dossier_numero: string;
+      valide_le: string | null;
+      envoye_client_le: string | null;
+      signe_client_le: string | null;
+      notifie_le: string | null;
+      notifie_par: string | null;
+      notifie_par_nom: string | null;
+      notifie_par_prenom: string | null;
+      pdf_disponible: boolean;
+      docx_disponible: boolean;
+    }>(
+      `SELECT
+         a.id,
+         a.numero,
+         a.type,
+         a.dossier_id,
+         d.numero AS dossier_numero,
+         a.valide_le,
+         a.envoye_client_le,
+         a.signe_client_le,
+         a.notifie_le,
+         a.notifie_par,
+         n.nom AS notifie_par_nom,
+         n.prenom AS notifie_par_prenom,
+         (a.pdf_path IS NOT NULL) AS pdf_disponible,
+         (a.docx_path IS NOT NULL) AS docx_disponible
+       FROM actes a
+       JOIN dossiers d ON d.id = a.dossier_id
+       LEFT JOIN utilisateurs n ON n.id = a.notifie_par
+       WHERE a.statut_validation = 'VALIDE'::statut_validation_acte
+         AND (
+           ($1::boolean = true AND a.signe_client_le IS NOT NULL)
+           OR
+           ($1::boolean = false AND a.signe_client_le IS NULL)
+         )
+       ORDER BY COALESCE(a.signe_client_le, a.valide_le) DESC NULLS LAST, a.date_acte DESC`,
+      [signes],
+    );
+  }
   async findByDossier(dossierId: string) {
     return this.tenantDb.query(
       `SELECT id, numero, type, date_acte, signe_par, envoye_client_le, signe_client_le, notifie_par, notifie_le,
@@ -710,4 +796,17 @@ function escapeHtml(input: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+﻿import { IsIn, IsString, IsUUID, MinLength } from 'class-validator';
 
 export const TYPES_DOSSIER = [
   'RECOUVREMENT',
@@ -15,15 +15,10 @@ export class CreateDossierDto {
   @IsUUID()
   clientId: string;
 
-  // Optionnel pour rester rétrocompatible avec les dossiers créés avant
-  // la séparation Client / Débiteur — mais fortement recommandé pour
-  // tout nouveau dossier de recouvrement/saisie.
-  @IsOptional()
   @IsUUID()
-  debiteurId?: string;
+  debiteurId: string;
 
-  @IsOptional()
   @IsString()
   @MinLength(3)
-  description?: string;
+  description: string;
 }

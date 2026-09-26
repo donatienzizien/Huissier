@@ -215,10 +215,11 @@ export default function GenererActeModal({ dossierId, onClose, onCreated }: Prop
           </div>
           <p className="text-xs text-gray-400">
             « Brouillon » reste modifiable et n'est visible que dans le dossier. « Soumettre » l'envoie
-            a un Clerc ou Huissier pour validation — le PDF officiel ne sera genere qu'apres validation.
+            a l'Huissier pour validation — le PDF officiel ne sera genere qu'apres validation.
           </p>
         </div>
       </div>
     </div>
   );
 }
+

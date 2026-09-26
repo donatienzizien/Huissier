@@ -1,36 +1,76 @@
-﻿import clsx from 'clsx';
+﻿import { ReactNode } from 'react';
 
-const COLORS: Record<string, string> = {
-  OUVERT: 'bg-navy-50 text-navy-700 border-navy-100',
-  EN_COURS: 'bg-brass-50 text-brass-700 border-brass-100',
-  CLOTURE: 'bg-green-50 text-green-700 border-green-200',
-  ARCHIVE: 'bg-gray-100 text-gray-600 border-gray-200',
-  ACTIF: 'bg-navy-50 text-navy-700 border-navy-100',
-  SOLDE: 'bg-green-50 text-green-700 border-green-200',
-  INSOLVABLE: 'bg-red-50 text-red-700 border-red-200',
-  BROUILLON: 'bg-gray-100 text-gray-600 border-gray-200',
-  ENVOYEE: 'bg-navy-50 text-navy-700 border-navy-100',
-  PARTIELLE: 'bg-brass-50 text-brass-700 border-brass-100',
-  PAYEE: 'bg-green-50 text-green-700 border-green-200',
-  ANNULEE: 'bg-red-50 text-red-700 border-red-200',
-  PARTICULIER: 'bg-gray-100 text-gray-600 border-gray-200',
-  ENTREPRISE: 'bg-brass-50 text-brass-700 border-brass-100',
-  BANQUE: 'bg-green-50 text-green-700 border-green-200',
-  BAILLEUR: 'bg-purple-50 text-purple-700 border-purple-200',
-  ADMINISTRATION: 'bg-navy-50 text-navy-700 border-navy-100',
-  CLIENT: 'bg-navy-50 text-navy-700 border-navy-100',
-  DEBITEUR: 'bg-wine-50 text-wine-600 border-wine-100',
+type CouleurBadge = 'green' | 'blue' | 'purple' | 'gray';
+
+export interface BadgeProps {
+  children?: ReactNode;
+  color?: CouleurBadge;
+  title?: string;
+
+  // Compatibilité avec les pages existantes du projet.
+  statut?: string;
+  label?: string;
+}
+
+const stylesParCouleur: Record<CouleurBadge, string> = {
+  green: 'bg-green-50 text-green-700 border border-green-200',
+  blue: 'bg-blue-50 text-blue-700 border border-blue-200',
+  purple: 'bg-purple-50 text-purple-700 border border-purple-200',
+  gray: 'bg-gray-50 text-gray-700 border border-gray-200',
 };
 
-export default function Badge({ statut, label }: { statut: string; label: string }) {
+function couleurDepuisStatut(statut?: string): CouleurBadge {
+  const valeur = (statut ?? '').toUpperCase();
+
+  if (
+    valeur.includes('ACTIF') ||
+    valeur.includes('VALIDE') ||
+    valeur.includes('PAYE') ||
+    valeur.includes('SIGNE') ||
+    valeur.includes('TERMINE')
+  ) {
+    return 'green';
+  }
+
+  if (
+    valeur.includes('EN_COURS') ||
+    valeur.includes('ATTENTE') ||
+    valeur.includes('BROUILLON') ||
+    valeur.includes('ENVOYE')
+  ) {
+    return 'blue';
+  }
+
+  if (
+    valeur.includes('ARCHIVE') ||
+    valeur.includes('ANNULE') ||
+    valeur.includes('REJETE') ||
+    valeur.includes('INSOLVABLE') ||
+    valeur.includes('IMPAYE') ||
+    valeur.includes('SUSPENDU')
+  ) {
+    return 'gray';
+  }
+
+  return 'gray';
+}
+
+export default function Badge({
+  children,
+  color,
+  title,
+  statut,
+  label,
+}: BadgeProps) {
+  const couleur = color ?? couleurDepuisStatut(statut);
+  const contenu = children ?? label ?? statut ?? '';
+
   return (
     <span
-      className={clsx(
-        'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border',
-        COLORS[statut] ?? 'bg-gray-50 text-gray-700 border-gray-200',
-      )}
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${stylesParCouleur[couleur]}`}
+      title={title}
     >
-      {label}
+      {contenu}
     </span>
   );
 }

@@ -23,15 +23,23 @@ export class ActesController {
     }
     return this.actesService.findAll(query);
   }
-
-  // File d'attente de validation, filtree selon ce que le role courant
-  // peut effectivement valider.
-  @Roles('HUISSIER', 'CLERC')
+// File d'attente de validation, réservée exclusivement à l'Huissier.
+  @Roles('HUISSIER')
   @Get('a-valider')
   findEnAttenteValidation(@CurrentUser() user: AuthenticatedUser) {
     return this.actesService.findEnAttenteValidation(user);
   }
+  @Roles('HUISSIER')
+  @Get('agents-actifs')
+  findAgentsActifs() {
+    return this.actesService.findAgentsActifs();
+  }
 
+  @Roles('HUISSIER')
+  @Get('valides')
+  findValides(@Query('signes') signes?: string) {
+    return this.actesService.findValides(signes === 'true');
+  }
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.actesService.findOne(id);
@@ -48,7 +56,7 @@ export class ActesController {
   @Roles('HUISSIER', 'CLERC', 'SECRETAIRE')
   @Post()
   create(@Body() dto: CreateActeDto, @CurrentUser() user: AuthenticatedUser) {
-    return this.actesService.create(dto, user.sub);
+    return this.actesService.create(dto, user);
   }
 
   @Roles('HUISSIER', 'CLERC', 'SECRETAIRE')
@@ -67,7 +75,7 @@ export class ActesController {
     return this.actesService.soumettre(id, user.sub);
   }
 
-  @Roles('HUISSIER', 'CLERC')
+  @Roles('HUISSIER')
   @Patch(':id/corriger')
   corrigerEnAttente(
     @Param('id') id: string,
@@ -77,13 +85,13 @@ export class ActesController {
     return this.actesService.corrigerEnAttente(id, dto, user);
   }
 
-  @Roles('HUISSIER', 'CLERC')
+  @Roles('HUISSIER')
   @Patch(':id/valider')
   valider(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.actesService.valider(id, user);
   }
 
-  @Roles('HUISSIER', 'CLERC')
+  @Roles('HUISSIER')
   @Patch(':id/rejeter')
   rejeter(
     @Param('id') id: string,
@@ -112,19 +120,19 @@ export class ActesController {
     res.send(buffer);
   }
 
-  @Roles('HUISSIER', 'CLERC')
-  @Post(':id/envoyer-client')
+  @Roles('HUISSIER')
+  @Patch(':id/envoyer-client')
   envoyerAuClient(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.actesService.envoyerAuClient(id, user.sub);
   }
 
-  @Roles('HUISSIER', 'CLERC')
+  @Roles('HUISSIER')
   @Patch(':id/marquer-signe')
   marquerSigne(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
     return this.actesService.marquerSigne(id, user.sub);
   }
 
-  @Roles('HUISSIER', 'CLERC')
+  @Roles('HUISSIER')
   @Patch(':id/marquer-notifie')
   marquerNotifie(
     @Param('id') id: string,
@@ -140,4 +148,16 @@ export class ActesController {
     return this.actesService.remove(id);
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
 

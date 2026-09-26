@@ -5,9 +5,7 @@ export class UpdateTiersDossierDto {
   @IsUUID()
   clientId?: string;
 
-  // Autorise explicitement null pour retirer un debiteur (pas seulement
-  // undefined qui signifierait "ne pas toucher").
   @IsOptional()
   @IsUUID()
-  debiteurId?: string | null;
+  debiteurId?: string;
 }

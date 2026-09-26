@@ -7,6 +7,7 @@ import { exportToCsv } from '../../lib/csv';
 import { ActeListItem, PaginatedResult, LABELS_TYPE_ACTE, TypeActe, TYPES_ACTE_PROCEDURE } from '../../types';
 import PageHeader from '../../components/PageHeader';
 import EmptyState from '../../components/EmptyState';
+import { useAuthStore } from '../../store/auth';
 
 const TYPE_TINT: Record<TypeActe, string> = {
   SIGNIFICATION: 'bg-navy-50 text-navy-700',
@@ -28,6 +29,8 @@ const TYPE_TINT: Record<TypeActe, string> = {
 };
 
 export default function ActesList() {
+  const user = useAuthStore((s) => s.user);
+  const peutSupprimer = user?.role === 'HUISSIER';
   const [result, setResult] = useState<PaginatedResult<ActeListItem> | null>(null);
   const [search, setSearch] = useState('');
   const [type, setType] = useState<TypeActe | ''>('');
@@ -238,14 +241,16 @@ export default function ActesList() {
                       >
                         <Download size={12} /> PDF
                       </button>
-                      <button
-                        onClick={() => handleDelete(a)}
-                        disabled={deletingId === a.id}
-                        title="Supprimer cet acte"
-                        className="text-gray-400 hover:text-wine-600 disabled:opacity-40 transition-colors"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {peutSupprimer && (
+                        <button
+                          onClick={() => handleDelete(a)}
+                          disabled={deletingId === a.id}
+                          title="Supprimer cet acte"
+                          className="text-gray-400 hover:text-wine-600 disabled:opacity-40 transition-colors"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -282,3 +287,4 @@ export default function ActesList() {
     </div>
   );
 }
+

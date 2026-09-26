@@ -128,6 +128,7 @@ CREATE TABLE "{{SCHEMA}}".factures (
   statut        "{{SCHEMA}}".statut_facture NOT NULL DEFAULT 'BROUILLON',
   date_emission TIMESTAMPTZ NOT NULL DEFAULT now(),
   date_echeance TIMESTAMPTZ,
+  alerte_echeance_envoyee BOOLEAN NOT NULL DEFAULT FALSE,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );

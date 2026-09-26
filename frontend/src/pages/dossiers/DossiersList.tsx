@@ -23,6 +23,7 @@ export default function DossiersList() {
   const debiteurIdFiltre = searchParams.get('debiteurId') ?? undefined;
   const user = useAuthStore((s) => s.user);
   const peutModifier = user?.role === 'HUISSIER' || user?.role === 'CLERC';
+  const peutSupprimer = user?.role === 'HUISSIER';
   const [result, setResult] = useState<PaginatedResult<Dossier> | null>(null);
   const [search, setSearch] = useState('');
   const [statut, setStatut] = useState<StatutDossier | ''>('');
@@ -78,6 +79,8 @@ export default function DossiersList() {
             search: search || undefined,
             statut: statut || undefined,
             type: type || undefined,
+            clientId: clientIdFiltre,
+            debiteurId: debiteurIdFiltre,
             page: page_,
             limit: 100,
           },
@@ -241,14 +244,16 @@ export default function DossiersList() {
                   {new Date(d.date_ouverture).toLocaleDateString('fr-FR')}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={() => handleDelete(d)}
-                    disabled={deletingId === d.id}
-                    title="Supprimer ce dossier"
-                    className="inline-flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-wine-600 disabled:opacity-40 transition-colors"
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  {peutSupprimer && (
+                    <button
+                      onClick={() => handleDelete(d)}
+                      disabled={deletingId === d.id}
+                      title="Supprimer ce dossier"
+                      className="inline-flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-wine-600 disabled:opacity-40 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -383,18 +388,36 @@ function CreateDossierModal({ onClose, onCreated }: { onClose: () => void; onCre
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+
     if (!client) {
-      setError('Selectionnez le client (mandant) dans la liste.');
+      setError('Selectionnez le client mandant dans la liste.');
       return;
     }
+
+    if (!debiteur) {
+      setError('Selectionnez le debiteur poursuivi dans la liste.');
+      return;
+    }
+
+    if (client.id === debiteur.id) {
+      setError('Le client mandant et le debiteur doivent etre deux fiches distinctes.');
+      return;
+    }
+
+    if (description.trim().length < 3) {
+      setError('Saisissez une description d au moins 3 caracteres.');
+      return;
+    }
+
     setSaving(true);
     setError(null);
+
     try {
       await api.post('/dossiers', {
         type,
         clientId: client.id,
-        debiteurId: debiteur?.id || undefined,
-        description: description || undefined,
+        debiteurId: debiteur.id,
+        description: description.trim(),
       });
       onCreated();
     } catch (err: any) {
@@ -403,7 +426,6 @@ function CreateDossierModal({ onClose, onCreated }: { onClose: () => void; onCre
       setSaving(false);
     }
   }
-
   return (
     <Modal title="Nouveau dossier" onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-3">
@@ -428,7 +450,6 @@ function CreateDossierModal({ onClose, onCreated }: { onClose: () => void; onCre
           roleTiers="DEBITEUR"
           value={debiteur}
           onChange={setDebiteur}
-          optionnel
           accent="wine"
         />
         <p className="text-xs text-gray-400 -mt-2">
@@ -436,7 +457,7 @@ function CreateDossierModal({ onClose, onCreated }: { onClose: () => void; onCre
         </p>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Description (optionnel)</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Description</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
@@ -458,4 +479,6 @@ function CreateDossierModal({ onClose, onCreated }: { onClose: () => void; onCre
     </Modal>
   );
 }
+
+
 
