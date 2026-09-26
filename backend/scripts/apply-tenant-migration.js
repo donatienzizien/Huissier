@@ -24,6 +24,10 @@ async function main() {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+
+      const quotedSchema = `"${cabinet.schema_name.replace(/"/g, '""')}"`;
+      await client.query(`SET LOCAL search_path TO ${quotedSchema}`);
+
       await client.query(sql);
       await client.query('COMMIT');
       console.log(`✓ ${cabinet.slug} (${cabinet.schema_name}) migré.`);
