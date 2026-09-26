@@ -133,6 +133,26 @@ CREATE TABLE "{{SCHEMA}}".factures (
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_factures_dossier ON "{{SCHEMA}}".factures(dossier_id);
+CREATE TABLE "{{SCHEMA}}".creances (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  numero TEXT NOT NULL UNIQUE,
+  dossier_id UUID NOT NULL REFERENCES "{{SCHEMA}}".dossiers(id) ON DELETE CASCADE,
+  libelle TEXT NOT NULL,
+  reference TEXT,
+  montant_initial NUMERIC(14,2) NOT NULL CHECK (montant_initial > 0),
+  statut TEXT NOT NULL DEFAULT 'ACTIVE'
+    CHECK (statut IN ('BROUILLON', 'ACTIVE', 'EN_NEGOCIATION', 'SUSPENDUE', 'SOLDEE', 'ABANDONNEE')),
+  date_exigibilite TIMESTAMPTZ,
+  observations TEXT,
+  cree_par UUID REFERENCES "{{SCHEMA}}".utilisateurs(id) ON DELETE SET NULL,
+  cloturee_par UUID REFERENCES "{{SCHEMA}}".utilisateurs(id) ON DELETE SET NULL,
+  cloturee_le TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_creances_dossier ON "{{SCHEMA}}".creances(dossier_id);
+CREATE INDEX idx_creances_statut ON "{{SCHEMA}}".creances(statut);
+CREATE INDEX idx_creances_date_exigibilite ON "{{SCHEMA}}".creances(date_exigibilite);
 
 CREATE TABLE "{{SCHEMA}}".paiements (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),

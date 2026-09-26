@@ -1,11 +1,11 @@
-﻿import { LucideIcon } from 'lucide-react';
+import { LucideIcon } from 'lucide-react';
 import { ReactNode } from 'react';
 
 interface Props {
   icon: LucideIcon;
   title: string;
   subtitle?: ReactNode;
-  accent?: 'navy' | 'brass' | 'wine';
+  accent?: 'navy' | 'brass' | 'wine' | 'gold';
   action?: ReactNode;
 }
 
@@ -24,6 +24,11 @@ const ACCENTS = {
     badge: 'bg-white/70',
     icon: 'text-wine-600',
     panel: 'bg-gradient-to-br from-wine-50 via-wine-50 to-brass-50 border-wine-100',
+  },
+  gold: {
+    badge: 'bg-white/70',
+    icon: 'text-gold-700',
+    panel: 'bg-gradient-to-br from-gold-50 via-gold-50 to-brass-50 border-gold-100',
   },
 };
 

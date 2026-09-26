@@ -1,4 +1,4 @@
-﻿import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard,
   FolderOpen,
@@ -11,6 +11,7 @@ import {
   Settings,
   UserCog,
   ClipboardCheck,
+  HandCoins,
 } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import SealMark from '../components/SealMark';
@@ -27,6 +28,7 @@ const navItems = [
   { to: '/clients', label: 'Clients', icon: Users, roles: ['HUISSIER', 'CLERC', 'COMPTABLE'] },
   { to: '/debiteurs', label: 'Debiteurs', icon: UserX, roles: ['HUISSIER', 'CLERC', 'COMPTABLE'] },
   { to: '/facturation', label: 'Facturation', icon: Receipt, roles: ['HUISSIER', 'COMPTABLE'] },
+  { to: '/recouvrement', label: 'Recouvrement', icon: HandCoins, roles: ['HUISSIER', 'CLERC', 'COMPTABLE', 'SECRETAIRE', 'AGENT_TERRAIN'] },
   { to: '/agenda', label: 'Agenda', icon: Calendar, roles: ['HUISSIER', 'CLERC', 'COMPTABLE', 'SECRETAIRE', 'AGENT_TERRAIN'] },
   { to: '/rapports', label: 'Rapports', icon: BarChart3, roles: ['HUISSIER', 'COMPTABLE'] },
   { to: '/administration', label: 'Administration', icon: Settings, roles: ['HUISSIER'] },
@@ -99,6 +101,3 @@ export default function DashboardLayout() {
     </div>
   );
 }
-
-
-

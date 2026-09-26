@@ -20,6 +20,7 @@ import { AgendaModule } from './agenda/agenda.module';
 import { RapportsModule } from './rapports/rapports.module';
 import { PiecesJointesModule } from './pieces-jointes/pieces-jointes.module';
 import { PortailClientModule } from './portail-client/portail-client.module';
+import { RecouvrementModule } from './recouvrement/recouvrement.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { PortailClientModule } from './portail-client/portail-client.module';
     RapportsModule,
     PiecesJointesModule,
     PortailClientModule,
+    RecouvrementModule,
   ],
 })
 export class AppModule implements NestModule {
