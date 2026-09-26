@@ -1,4 +1,4 @@
-﻿-- Sprint 1 Recouvrement
+-- Sprint 1 Recouvrement
 -- Table des creances dues par les debiteurs dans les dossiers de recouvrement.
 -- Cette migration est volontairement idempotente pour les schemas tenant existants.
 
