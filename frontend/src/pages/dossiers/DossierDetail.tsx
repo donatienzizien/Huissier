@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -19,6 +19,7 @@ import {
   UserCog,
   XCircle,
   Send,
+  HandCoins,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { telechargerActePdf } from '../../lib/pdf';
@@ -45,6 +46,7 @@ import Badge from '../../components/Badge';
 import Modal from '../../components/Modal';
 import GenererActeModal from '../actes/GenererActeModal';
 import NouvelleFactureModal from '../facturation/NouvelleFactureModal';
+import NouvelleCreanceModal from '../recouvrement/NouvelleCreanceModal';
 
 const TRANSITIONS: Record<StatutDossier, StatutDossier[]> = {
   OUVERT: ['EN_COURS', 'CLOTURE'],
@@ -78,6 +80,7 @@ export default function DossierDetail() {
   const [updating, setUpdating] = useState(false);
   const [showGenererActe, setShowGenererActe] = useState(false);
   const [showNouvelleFacture, setShowNouvelleFacture] = useState(false);
+  const [showNouvelleCreance, setShowNouvelleCreance] = useState(false);
   const [showCorrigerTiers, setShowCorrigerTiers] = useState(false);
   const [busyActeId, setBusyActeId] = useState<string | null>(null);
   const [envoiError, setEnvoiError] = useState<string | null>(null);
@@ -571,6 +574,24 @@ export default function DossierDetail() {
         </div>
       </div>
 
+      {dossier.type === 'RECOUVREMENT' && (
+        <div className="bg-white rounded-lg border border-gray-200 p-5 mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-navy-900 flex items-center gap-1.5">
+              <HandCoins size={15} className="text-gold-700" /> Créances
+            </h2>
+            <button
+              onClick={() => setShowNouvelleCreance(true)}
+              className="flex items-center gap-1.5 text-xs font-medium text-gold-700 border border-gold-200 rounded-md px-2.5 py-1.5 hover:bg-gold-50"
+            >
+              <HandCoins size={14} /> Nouvelle créance
+            </button>
+          </div>
+          <p className="text-sm text-gray-400">
+            Ajoutez les créances dues par le débiteur pour ce dossier de recouvrement.
+          </p>
+        </div>
+      )}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mt-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-navy-900 flex items-center gap-1.5">
@@ -767,6 +788,16 @@ export default function DossierDetail() {
           onClose={() => setShowNouvelleFacture(false)}
           onCreated={() => {
             setShowNouvelleFacture(false);
+            load();
+          }}
+        />
+      )}
+      {showNouvelleCreance && (
+        <NouvelleCreanceModal
+          dossierId={dossier.id}
+          onClose={() => setShowNouvelleCreance(false)}
+          onCreated={() => {
+            setShowNouvelleCreance(false);
             load();
           }}
         />
