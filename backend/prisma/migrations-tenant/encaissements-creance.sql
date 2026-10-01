@@ -16,3 +16,10 @@ CREATE INDEX IF NOT EXISTS idx_encaissements_creance
 
 CREATE INDEX IF NOT EXISTS idx_encaissements_creance_date
   ON "{{SCHEMA}}".encaissements_creance(date_paiement);
+
+CREATE INDEX IF NOT EXISTS idx_encaissements_creance_liste
+  ON "{{SCHEMA}}".encaissements_creance(
+    creance_id,
+    date_paiement DESC,
+    created_at DESC
+  );

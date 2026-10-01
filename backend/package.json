@@ -12,6 +12,7 @@
         "prisma:migrate": "prisma migrate deploy",
         "prisma:migrate:dev": "prisma migrate dev",
         "seed": "ts-node prisma/seed.ts",
+        "migrate:tenant:encaissements": "ts-node prisma/migrate-tenant-encaissements.ts",
         "test": "jest",
         "test:watch": "jest --watch",
         "test:cov": "jest --coverage"

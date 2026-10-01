@@ -154,6 +154,24 @@ CREATE INDEX idx_creances_dossier ON "{{SCHEMA}}".creances(dossier_id);
 CREATE INDEX idx_creances_statut ON "{{SCHEMA}}".creances(statut);
 CREATE INDEX idx_creances_date_exigibilite ON "{{SCHEMA}}".creances(date_exigibilite);
 
+CREATE TABLE "{{SCHEMA}}".encaissements_creance (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  creance_id UUID NOT NULL REFERENCES "{{SCHEMA}}".creances(id) ON DELETE RESTRICT,
+  montant NUMERIC(14,2) NOT NULL CHECK (montant > 0),
+  mode "{{SCHEMA}}".mode_paiement NOT NULL,
+  reference TEXT,
+  date_paiement TIMESTAMPTZ NOT NULL DEFAULT now(),
+  note TEXT,
+  encaisse_par UUID REFERENCES "{{SCHEMA}}".utilisateurs(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_encaissements_creance_liste
+  ON "{{SCHEMA}}".encaissements_creance(
+    creance_id,
+    date_paiement DESC,
+    created_at DESC
+  );
 CREATE TABLE "{{SCHEMA}}".paiements (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   facture_id  UUID NOT NULL REFERENCES "{{SCHEMA}}".factures(id) ON DELETE RESTRICT,
