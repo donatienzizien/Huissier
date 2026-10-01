@@ -600,16 +600,26 @@ export default function DossierDetail() {
 
       {dossier.type === 'RECOUVREMENT' && (
         <div className="bg-white rounded-lg border border-gray-200 p-5 mt-6">
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <h2 className="text-sm font-semibold text-navy-900 flex items-center gap-1.5">
               <HandCoins size={15} className="text-gold-700" /> Créances
             </h2>
-            <button
-              onClick={() => setShowNouvelleCreance(true)}
-              className="flex items-center gap-1.5 text-xs font-medium text-gold-700 border border-gold-200 rounded-md px-2.5 py-1.5 hover:bg-gold-50"
-            >
-              <HandCoins size={14} /> Nouvelle créance
-            </button>
+            <div className="flex items-center gap-2">
+              {creancesTotal > 0 && (
+                <Link
+                  to={`/recouvrement?dossierId=${dossier.id}`}
+                  className="text-xs font-medium text-navy-700 hover:underline"
+                >
+                  Voir toutes les créances
+                </Link>
+              )}
+              <button
+                onClick={() => setShowNouvelleCreance(true)}
+                className="flex items-center gap-1.5 text-xs font-medium text-gold-700 border border-gold-200 rounded-md px-2.5 py-1.5 hover:bg-gold-50"
+              >
+                <HandCoins size={14} /> Nouvelle créance
+              </button>
+            </div>
           </div>
 
           {loadingCreances ? (

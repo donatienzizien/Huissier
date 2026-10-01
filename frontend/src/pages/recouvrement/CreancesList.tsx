@@ -1,6 +1,6 @@
-﻿import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { Download, HandCoins, Plus, Search } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Badge from '../../components/Badge';
 import EmptyState from '../../components/EmptyState';
 import PageHeader from '../../components/PageHeader';
@@ -20,6 +20,8 @@ function formatFCFA(value: string | number) {
 }
 
 export default function CreancesList() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const dossierId = searchParams.get('dossierId') ?? '';
   const user = useAuthStore((state) => state.user);
   const peutCreer = user?.role === 'HUISSIER' || user?.role === 'CLERC';
 
@@ -38,6 +40,7 @@ export default function CreancesList() {
       const data = await getCreances({
         search: search || undefined,
         statut: statut || undefined,
+        dossierId: dossierId || undefined,
         page,
         limit: 20,
       });
@@ -52,7 +55,7 @@ export default function CreancesList() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, statut]);
+  }, [page, statut, dossierId]);
 
   function handleSearchSubmit(event: FormEvent) {
     event.preventDefault();
@@ -73,6 +76,7 @@ export default function CreancesList() {
         const data = await getCreances({
           search: search || undefined,
           statut: statut || undefined,
+          dossierId: dossierId || undefined,
           page: pageCourante,
           limit: 100,
         });
@@ -153,6 +157,23 @@ export default function CreancesList() {
       {errorBanner && (
         <div className="mb-4 rounded-lg border border-wine-100 bg-wine-50 text-wine-600 text-sm px-4 py-2">
           {errorBanner}
+        </div>
+      )}
+
+      {dossierId && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gold-200 bg-gold-50 px-4 py-2 text-sm text-gold-800">
+          <span>Créances filtrées pour un dossier.</span>
+          <button
+            onClick={() => {
+              const nextParams = new URLSearchParams(searchParams);
+              nextParams.delete('dossierId');
+              setSearchParams(nextParams);
+              setPage(1);
+            }}
+            className="text-xs font-medium underline hover:text-gold-950"
+          >
+            Afficher toutes les créances
+          </button>
         </div>
       )}
 
