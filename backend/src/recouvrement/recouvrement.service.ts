@@ -1,4 +1,4 @@
-﻿import {
+import {
   BadRequestException,
   ForbiddenException,
   Injectable,
@@ -10,6 +10,7 @@ import { CreateCreanceDto } from './dto/create-creance.dto';
 import { UpdateCreanceDto } from './dto/update-creance.dto';
 import { UpdateStatutCreanceDto } from './dto/update-statut-creance.dto';
 import { QueryCreancesDto } from './dto/query-creances.dto';
+import { CreateEncaissementDto } from './dto/create-encaissement.dto';
 
 type DossierAcces = {
   id: string;
@@ -301,17 +302,139 @@ export class RecouvrementService {
       );
     }
 
+    if (dto.montantInitial !== undefined) {
+      const montantInitialDemande = dto.montantInitial;
+
+      return this.tenantDb.transaction(async (client) => {
+        const locked = await client.query<{
+          id: string;
+          montant_initial: string;
+          statut: string;
+        }>(
+          `SELECT id, montant_initial, statut
+           FROM creances
+           WHERE id = $1
+           FOR UPDATE`,
+          [id],
+        );
+
+        const creanceVerrouillee = locked.rows[0];
+
+        if (!creanceVerrouillee) {
+          throw new NotFoundException('Créance introuvable.');
+        }
+
+        if (
+          creanceVerrouillee.statut === 'SOLDEE' ||
+          creanceVerrouillee.statut === 'ABANDONNEE'
+        ) {
+          throw new BadRequestException(
+            "Une créance soldée ou abandonnée ne peut plus être modifiée.",
+          );
+        }
+
+        const totalEncaisseResult = await client.query<{ total: string }>(
+          `SELECT COALESCE(SUM(montant), 0) AS total
+           FROM encaissements_creance
+           WHERE creance_id = $1`,
+          [id],
+        );
+
+        const totalEncaisse = Number(totalEncaisseResult.rows[0]?.total ?? 0);
+        const montantInitialCentimes = Math.round(montantInitialDemande * 100);
+        const totalEncaisseCentimes = Math.round(totalEncaisse * 100);
+
+        if (montantInitialCentimes < totalEncaisseCentimes) {
+          throw new BadRequestException(
+            `Le montant initial ne peut pas être inférieur au total déjà encaissé (${totalEncaisse.toLocaleString('fr-FR')} FCFA).`,
+          );
+        }
+
+        const fields: string[] = [];
+        const params: unknown[] = [];
+        const soldeeParAjustement =
+          montantInitialCentimes === totalEncaisseCentimes;
+
+        if (dto.libelle !== undefined) {
+          params.push(dto.libelle.trim());
+          fields.push(`libelle = $${params.length}`);
+        }
+
+        params.push(montantInitialDemande);
+        fields.push(`montant_initial = $${params.length}`);
+
+        if (soldeeParAjustement) {
+          params.push(user.sub);
+          fields.push(`statut = 'SOLDEE'`);
+          fields.push(`cloturee_par = $${params.length}`);
+          fields.push(`cloturee_le = now()`);
+        }
+
+        if (dto.reference !== undefined) {
+          params.push(dto.reference?.trim() || null);
+          fields.push(`reference = $${params.length}`);
+        }
+
+        if (dto.dateExigibilite !== undefined) {
+          params.push(dto.dateExigibilite || null);
+          fields.push(`date_exigibilite = $${params.length}`);
+        }
+
+        if (dto.observations !== undefined) {
+          params.push(dto.observations?.trim() || null);
+          fields.push(`observations = $${params.length}`);
+        }
+
+        params.push(id);
+
+        const updated = await client.query(
+          `UPDATE creances
+           SET ${fields.join(', ')}, updated_at = now()
+           WHERE id = $${params.length}
+           RETURNING *`,
+          params,
+        );
+
+        await client.query(
+          `INSERT INTO dossier_historique (dossier_id, utilisateur_id, action, details)
+           VALUES ($1, $2, 'CREANCE_MODIFIEE', $3)`,
+          [
+            creance.dossier_id,
+            user.sub,
+            JSON.stringify({
+              creanceId: id,
+              champs: fields.map((field) => field.split(' = ')[0]),
+            }),
+          ],
+        );
+
+        if (soldeeParAjustement) {
+          await client.query(
+            `INSERT INTO dossier_historique (dossier_id, utilisateur_id, action, details)
+             VALUES ($1, $2, 'CREANCE_SOLDEE_PAR_AJUSTEMENT_MONTANT', $3)`,
+            [
+              creance.dossier_id,
+              user.sub,
+              JSON.stringify({
+                creanceId: id,
+                numero: creance.numero,
+                montantInitial: montantInitialDemande,
+                totalEncaisse,
+              }),
+            ],
+          );
+        }
+
+        return updated.rows[0];
+      });
+    }
+
     const fields: string[] = [];
     const params: unknown[] = [];
 
     if (dto.libelle !== undefined) {
       params.push(dto.libelle.trim());
       fields.push(`libelle = $${params.length}`);
-    }
-
-    if (dto.montantInitial !== undefined) {
-      params.push(dto.montantInitial);
-      fields.push(`montant_initial = $${params.length}`);
     }
 
     if (dto.reference !== undefined) {
@@ -359,11 +482,171 @@ export class RecouvrementService {
     return updated;
   }
 
+  async findEncaissements(id: string, user: AuthenticatedUser) {
+    const creance = await this.findOne(id, user);
+
+    return this.tenantDb.query(
+      `SELECT
+         e.*,
+         u.nom AS encaisse_par_nom,
+         u.prenom AS encaisse_par_prenom
+       FROM encaissements_creance e
+       LEFT JOIN utilisateurs u ON u.id = e.encaisse_par
+       WHERE e.creance_id = $1
+       ORDER BY e.date_paiement DESC, e.created_at DESC`,
+      [creance.id],
+    );
+  }
+
+  async ajouterEncaissement(
+    id: string,
+    dto: CreateEncaissementDto,
+    user: AuthenticatedUser,
+  ) {
+    const creanceLecture = await this.findOne(id, user);
+    this.verifierModificationDossier(creanceLecture, user);
+
+    return this.tenantDb.transaction(async (client) => {
+      const locked = await client.query<{
+        id: string;
+        numero: string;
+        dossier_id: string;
+        montant_initial: string;
+        statut: string;
+      }>(
+        `SELECT id, numero, dossier_id, montant_initial, statut
+         FROM creances
+         WHERE id = $1
+         FOR UPDATE`,
+        [id],
+      );
+
+      const creance = locked.rows[0];
+      if (!creance) {
+        throw new NotFoundException('Créance introuvable.');
+      }
+
+      if (creance.statut === 'ABANDONNEE') {
+        throw new BadRequestException(
+          "Impossible d'enregistrer un encaissement sur une créance abandonnée.",
+        );
+      }
+
+      if (creance.statut === 'SOLDEE') {
+        throw new BadRequestException(
+          'Cette créance est déjà soldée.',
+        );
+      }
+
+      const totalRow = await client.query<{ total: string }>(
+        `SELECT COALESCE(SUM(montant), 0) AS total
+         FROM encaissements_creance
+         WHERE creance_id = $1`,
+        [id],
+      );
+
+      const totalAvant = Number(totalRow.rows[0]?.total ?? 0);
+      const montantInitial = Number(creance.montant_initial);
+      const totalAvantCentimes = Math.round(totalAvant * 100);
+      const montantInitialCentimes = Math.round(montantInitial * 100);
+      const montantCentimes = Math.round(dto.montant * 100);
+      const restantCentimes = montantInitialCentimes - totalAvantCentimes;
+      const restant = restantCentimes / 100;
+
+      if (montantCentimes > restantCentimes) {
+        throw new BadRequestException(
+          `Le montant dépasse le solde restant (${restant.toLocaleString('fr-FR')} FCFA).`,
+        );
+      }
+
+      const insertion = await client.query(
+        `INSERT INTO encaissements_creance (
+           creance_id,
+           montant,
+           mode,
+           reference,
+           note,
+           encaisse_par
+         )
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [
+          id,
+          dto.montant,
+          dto.mode,
+          dto.reference?.trim() || null,
+          dto.note?.trim() || null,
+          user.sub,
+        ],
+      );
+
+      const encaissement = insertion.rows[0];
+      const totalEncaisseCentimes = totalAvantCentimes + montantCentimes;
+      const totalEncaisse = totalEncaisseCentimes / 100;
+      const estSoldee = totalEncaisseCentimes === montantInitialCentimes;
+
+      const updated = await client.query(
+        `UPDATE creances
+         SET statut = CASE WHEN $1 THEN 'SOLDEE' ELSE statut END,
+             cloturee_par = CASE WHEN $1 THEN $2 ELSE cloturee_par END,
+             cloturee_le = CASE WHEN $1 THEN now() ELSE cloturee_le END,
+             updated_at = now()
+         WHERE id = $3
+         RETURNING *`,
+        [estSoldee, user.sub, id],
+      );
+
+      await client.query(
+        `INSERT INTO dossier_historique (dossier_id, utilisateur_id, action, details)
+         VALUES ($1, $2, 'ENCAISSEMENT_ENREGISTRE', $3)`,
+        [
+          creance.dossier_id,
+          user.sub,
+          JSON.stringify({
+            creanceId: id,
+            encaissementId: encaissement.id,
+            montant: encaissement.montant,
+            mode: encaissement.mode,
+            totalEncaisse,
+            soldeRestant: montantInitial - totalEncaisse,
+          }),
+        ],
+      );
+
+      if (estSoldee) {
+        await client.query(
+          `INSERT INTO dossier_historique (dossier_id, utilisateur_id, action, details)
+           VALUES ($1, $2, 'CREANCE_SOLDEE_PAR_ENCAISSEMENT', $3)`,
+          [
+            creance.dossier_id,
+            user.sub,
+            JSON.stringify({
+              creanceId: id,
+              numero: creance.numero,
+              montantInitial,
+              totalEncaisse,
+            }),
+          ],
+        );
+      }
+
+      return {
+        creance: updated.rows[0],
+        encaissement,
+      };
+    });
+  }
   async updateStatut(id: string, dto: UpdateStatutCreanceDto, user: AuthenticatedUser) {
     const creance = await this.findOne(id, user);
     this.verifierModificationDossier(creance, user);
 
-    if (dto.statut === 'SOLDEE' || dto.statut === 'ABANDONNEE') {
+    if (dto.statut === 'SOLDEE') {
+      throw new BadRequestException(
+        "Une créance est soldée automatiquement lorsque les encaissements atteignent son montant initial.",
+      );
+    }
+
+    if (dto.statut === 'ABANDONNEE') {
       this.verifierFinalisation(user);
     }
 
@@ -373,7 +656,7 @@ export class RecouvrementService {
       );
     }
 
-    const finalisee = dto.statut === 'SOLDEE' || dto.statut === 'ABANDONNEE';
+    const finalisee = dto.statut === 'ABANDONNEE';
 
     const updated = await this.tenantDb.queryOne(
       `UPDATE creances
