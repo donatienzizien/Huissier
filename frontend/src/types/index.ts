@@ -483,3 +483,17 @@ export interface CreanceDetail extends Creance {
   debiteur_telephone?: string | null;
   debiteur_adresse?: string | null;
 }
+
+export interface EncaissementCreance {
+  id: string;
+  creance_id: string;
+  montant: string;
+  mode: ModePaiement;
+  reference: string | null;
+  note: string | null;
+  date_paiement: string;
+  encaisse_par: string | null;
+  encaisse_par_nom?: string | null;
+  encaisse_par_prenom?: string | null;
+  created_at: string;
+}

@@ -2,6 +2,8 @@
 import type {
   Creance,
   CreanceDetail,
+  EncaissementCreance,
+  ModePaiement,
   PaginatedResult,
   StatutCreance,
 } from '../types';
@@ -24,6 +26,18 @@ export interface CreateCreancePayload {
   reference?: string;
   dateExigibilite?: string;
   observations?: string;
+}
+
+export interface CreateEncaissementPayload {
+  montant: number;
+  mode: ModePaiement;
+  reference?: string;
+  note?: string;
+}
+
+export interface CreateEncaissementResult {
+  creance: Creance;
+  encaissement: EncaissementCreance;
 }
 
 export interface UpdateCreancePayload {
@@ -58,5 +72,23 @@ export async function modifierCreance(id: string, payload: UpdateCreancePayload)
 
 export async function modifierStatutCreance(id: string, statut: StatutCreance) {
   const { data } = await api.patch<Creance>(`/recouvrement/${id}/statut`, { statut });
+  return data;
+}
+
+export async function getEncaissementsCreance(id: string) {
+  const { data } = await api.get<EncaissementCreance[]>(
+    '/recouvrement/' + id + '/encaissements',
+  );
+  return data;
+}
+
+export async function creerEncaissement(
+  id: string,
+  payload: CreateEncaissementPayload,
+) {
+  const { data } = await api.post<CreateEncaissementResult>(
+    '/recouvrement/' + id + '/encaissements',
+    payload,
+  );
   return data;
 }
