@@ -1,4 +1,4 @@
-﻿import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { unlink } from 'fs/promises';
 import { TenantDbService } from '../tenant/tenant-db.service';
 import { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
@@ -400,6 +400,7 @@ export class DossiersService {
         `DELETE FROM paiements WHERE facture_id IN (SELECT id FROM factures WHERE dossier_id = $1)`,
         [id],
       );
+      await txClient.query(`DELETE FROM creances WHERE dossier_id = $1`, [id]);
       await txClient.query(`DELETE FROM factures WHERE dossier_id = $1`, [id]);
       await txClient.query(`DELETE FROM actes WHERE dossier_id = $1`, [id]);
       await txClient.query(`DELETE FROM evenements WHERE dossier_id = $1`, [id]);
@@ -412,9 +413,3 @@ export class DossiersService {
     return { id, numero: dossier.numero, supprime: true };
   }
 }
-
-
-
-
-
-

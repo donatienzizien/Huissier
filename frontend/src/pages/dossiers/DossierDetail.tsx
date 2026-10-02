@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -19,6 +19,7 @@ import {
   UserCog,
   XCircle,
   Send,
+  HandCoins,
 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { telechargerActePdf } from '../../lib/pdf';
@@ -39,12 +40,16 @@ import {
   PaginatedResult,
   UtilisateurSimple,
   LABELS_STATUT_VALIDATION,
+  Creance,
+  LABELS_STATUT_CREANCE,
 } from '../../types';
 import { useAuthStore } from '../../store/auth';
 import Badge from '../../components/Badge';
 import Modal from '../../components/Modal';
 import GenererActeModal from '../actes/GenererActeModal';
 import NouvelleFactureModal from '../facturation/NouvelleFactureModal';
+import NouvelleCreanceModal from '../recouvrement/NouvelleCreanceModal';
+import { getCreances } from '../../lib/recouvrement';
 
 const TRANSITIONS: Record<StatutDossier, StatutDossier[]> = {
   OUVERT: ['EN_COURS', 'CLOTURE'],
@@ -78,6 +83,10 @@ export default function DossierDetail() {
   const [updating, setUpdating] = useState(false);
   const [showGenererActe, setShowGenererActe] = useState(false);
   const [showNouvelleFacture, setShowNouvelleFacture] = useState(false);
+  const [showNouvelleCreance, setShowNouvelleCreance] = useState(false);
+  const [creances, setCreances] = useState<Creance[]>([]);
+  const [creancesTotal, setCreancesTotal] = useState(0);
+  const [loadingCreances, setLoadingCreances] = useState(false);
   const [showCorrigerTiers, setShowCorrigerTiers] = useState(false);
   const [busyActeId, setBusyActeId] = useState<string | null>(null);
   const [envoiError, setEnvoiError] = useState<string | null>(null);
@@ -107,8 +116,26 @@ export default function DossierDetail() {
     try {
       const { data } = await api.get<DossierDetailType>(`/dossiers/${id}`);
       setDossier(data);
+
+      if (data.type === 'RECOUVREMENT') {
+        await loadCreances(data.id);
+      } else {
+        setCreances([]);
+        setCreancesTotal(0);
+      }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadCreances(dossierId: string) {
+    setLoadingCreances(true);
+    try {
+      const result = await getCreances({ dossierId, page: 1, limit: 100 });
+      setCreances(result.data);
+      setCreancesTotal(result.pagination.total);
+    } finally {
+      setLoadingCreances(false);
     }
   }
 
@@ -571,6 +598,91 @@ export default function DossierDetail() {
         </div>
       </div>
 
+      {dossier.type === 'RECOUVREMENT' && (
+        <div className="bg-white rounded-lg border border-gray-200 p-5 mt-6">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <h2 className="text-sm font-semibold text-navy-900 flex items-center gap-1.5">
+              <HandCoins size={15} className="text-gold-700" /> Créances
+            </h2>
+            <div className="flex items-center gap-2">
+              {creancesTotal > 0 && (
+                <Link
+                  to={`/recouvrement?dossierId=${dossier.id}`}
+                  className="text-xs font-medium text-navy-700 hover:underline"
+                >
+                  Voir toutes les créances
+                </Link>
+              )}
+              <button
+                onClick={() => setShowNouvelleCreance(true)}
+                className="flex items-center gap-1.5 text-xs font-medium text-gold-700 border border-gold-200 rounded-md px-2.5 py-1.5 hover:bg-gold-50"
+              >
+                <HandCoins size={14} /> Nouvelle créance
+              </button>
+            </div>
+          </div>
+
+          {loadingCreances ? (
+            <p className="text-sm text-gray-400">Chargement des créances…</p>
+          ) : creancesTotal === 0 ? (
+            <p className="text-sm text-gray-400">
+              Aucune créance pour ce dossier. Ajoutez la première créance due par le débiteur.
+            </p>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                <div className="rounded-md bg-gold-50 border border-gold-100 px-3 py-2">
+                  <p className="text-xs text-gold-700">Créances</p>
+                  <p className="font-nums text-lg font-semibold text-gold-800">{creancesTotal}</p>
+                </div>
+                <div className="rounded-md bg-navy-50 border border-navy-100 px-3 py-2">
+                  <p className="text-xs text-navy-700">Montant initial</p>
+                  <p className="font-nums text-lg font-semibold text-navy-900">
+                    {new Intl.NumberFormat('fr-FR').format(
+                      creances.reduce((total, creance) => total + Number(creance.montant_initial), 0),
+                    )} FCFA
+                  </p>
+                </div>
+                <div className="rounded-md bg-wine-50 border border-wine-100 px-3 py-2">
+                  <p className="text-xs text-wine-700">Créances actives</p>
+                  <p className="font-nums text-lg font-semibold text-wine-800">
+                    {creances.filter((creance) => creance.statut === 'ACTIVE').length}
+                  </p>
+                </div>
+              </div>
+
+              <ul className="divide-y divide-gray-100 text-sm">
+                {creances
+                  .slice()
+                  .sort((a, b) => b.created_at.localeCompare(a.created_at))
+                  .slice(0, 5)
+                  .map((creance) => (
+                    <li key={creance.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
+                      <div className="min-w-0">
+                        <Link
+                          to={`/recouvrement/${creance.id}`}
+                          className="font-nums font-semibold text-navy-700 hover:text-gold-700 hover:underline"
+                        >
+                          {creance.numero}
+                        </Link>
+                        <p className="truncate text-xs text-gray-500">{creance.libelle}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-nums text-xs font-semibold text-gold-700">
+                          {new Intl.NumberFormat('fr-FR').format(Number(creance.montant_initial))} FCFA
+                        </span>
+                        <Badge
+                          statut={creance.statut}
+                          label={LABELS_STATUT_CREANCE[creance.statut]}
+                        />
+                      </div>
+                    </li>
+                  ))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
       <div className="bg-white rounded-lg border border-gray-200 p-5 mt-6">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-navy-900 flex items-center gap-1.5">
@@ -767,6 +879,16 @@ export default function DossierDetail() {
           onClose={() => setShowNouvelleFacture(false)}
           onCreated={() => {
             setShowNouvelleFacture(false);
+            load();
+          }}
+        />
+      )}
+      {showNouvelleCreance && (
+        <NouvelleCreanceModal
+          dossierId={dossier.id}
+          onClose={() => setShowNouvelleCreance(false)}
+          onCreated={() => {
+            setShowNouvelleCreance(false);
             load();
           }}
         />

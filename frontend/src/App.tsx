@@ -1,4 +1,4 @@
-﻿import { lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 const Login = lazy(() => import('./pages/Login'));
@@ -11,6 +11,8 @@ const ActesList = lazy(() => import('./pages/actes/ActesList'));
 const ActesAValider = lazy(() => import('./pages/actes/ActesAValider'));
 const FacturesList = lazy(() => import('./pages/facturation/FacturesList'));
 const FactureDetail = lazy(() => import('./pages/facturation/FactureDetail'));
+const CreancesList = lazy(() => import('./pages/recouvrement/CreancesList'));
+const CreanceDetail = lazy(() => import('./pages/recouvrement/CreanceDetail'));
 const Agenda = lazy(() => import('./pages/agenda/Agenda'));
 const Rapports = lazy(() => import('./pages/rapports/Rapports'));
 const Administration = lazy(() => import('./pages/administration/Administration'));
@@ -69,6 +71,8 @@ export default function App() {
             <Route path="/actes/a-valider" element={<ActesAValider />} />
             <Route path="/facturation" element={<FacturesList />} />
             <Route path="/facturation/:id" element={<FactureDetail />} />
+            <Route path="/recouvrement" element={<CreancesList />} />
+            <Route path="/recouvrement/:id" element={<CreanceDetail />} />
             <Route path="/agenda" element={<Agenda />} />
             <Route path="/rapports" element={<Rapports />} />
             <Route path="/administration" element={<Administration />} />
@@ -95,11 +99,3 @@ export default function App() {
     </BrowserRouter>
   );
 }
-
-
-
-
-
-
-
-

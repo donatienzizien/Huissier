@@ -133,7 +133,45 @@ CREATE TABLE "{{SCHEMA}}".factures (
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_factures_dossier ON "{{SCHEMA}}".factures(dossier_id);
+CREATE TABLE "{{SCHEMA}}".creances (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  numero TEXT NOT NULL UNIQUE,
+  dossier_id UUID NOT NULL REFERENCES "{{SCHEMA}}".dossiers(id) ON DELETE CASCADE,
+  libelle TEXT NOT NULL,
+  reference TEXT,
+  montant_initial NUMERIC(14,2) NOT NULL CHECK (montant_initial > 0),
+  statut TEXT NOT NULL DEFAULT 'ACTIVE'
+    CHECK (statut IN ('BROUILLON', 'ACTIVE', 'EN_NEGOCIATION', 'SUSPENDUE', 'SOLDEE', 'ABANDONNEE')),
+  date_exigibilite TIMESTAMPTZ,
+  observations TEXT,
+  cree_par UUID REFERENCES "{{SCHEMA}}".utilisateurs(id) ON DELETE SET NULL,
+  cloturee_par UUID REFERENCES "{{SCHEMA}}".utilisateurs(id) ON DELETE SET NULL,
+  cloturee_le TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_creances_dossier ON "{{SCHEMA}}".creances(dossier_id);
+CREATE INDEX idx_creances_statut ON "{{SCHEMA}}".creances(statut);
+CREATE INDEX idx_creances_date_exigibilite ON "{{SCHEMA}}".creances(date_exigibilite);
 
+CREATE TABLE "{{SCHEMA}}".encaissements_creance (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  creance_id UUID NOT NULL REFERENCES "{{SCHEMA}}".creances(id) ON DELETE RESTRICT,
+  montant NUMERIC(14,2) NOT NULL CHECK (montant > 0),
+  mode "{{SCHEMA}}".mode_paiement NOT NULL,
+  reference TEXT,
+  date_paiement TIMESTAMPTZ NOT NULL DEFAULT now(),
+  note TEXT,
+  encaisse_par UUID REFERENCES "{{SCHEMA}}".utilisateurs(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_encaissements_creance_liste
+  ON "{{SCHEMA}}".encaissements_creance(
+    creance_id,
+    date_paiement DESC,
+    created_at DESC
+  );
 CREATE TABLE "{{SCHEMA}}".paiements (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   facture_id  UUID NOT NULL REFERENCES "{{SCHEMA}}".factures(id) ON DELETE RESTRICT,

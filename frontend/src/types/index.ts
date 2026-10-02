@@ -436,3 +436,64 @@ export interface PaginatedResult<T> {
 
 
 
+
+export type StatutCreance =
+  | 'BROUILLON'
+  | 'ACTIVE'
+  | 'EN_NEGOCIATION'
+  | 'SUSPENDUE'
+  | 'SOLDEE'
+  | 'ABANDONNEE';
+
+export const LABELS_STATUT_CREANCE: Record<StatutCreance, string> = {
+  BROUILLON: 'Brouillon',
+  ACTIVE: 'Active',
+  EN_NEGOCIATION: 'En negociation',
+  SUSPENDUE: 'Suspendue',
+  SOLDEE: 'Soldee',
+  ABANDONNEE: 'Abandonnee',
+};
+
+export interface Creance {
+  id: string;
+  numero: string;
+  dossier_id: string;
+  dossier_numero?: string;
+  dossier_type?: TypeDossier;
+  debiteur_id?: string;
+  debiteur_nom?: string;
+  debiteur_prenom?: string | null;
+  client_nom?: string;
+  client_prenom?: string | null;
+  libelle: string;
+  reference: string | null;
+  montant_initial: string;
+  statut: StatutCreance;
+  date_exigibilite: string | null;
+  observations: string | null;
+  cree_par: string | null;
+  cloturee_par: string | null;
+  cloturee_le: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreanceDetail extends Creance {
+  dossier_statut?: StatutDossier;
+  debiteur_telephone?: string | null;
+  debiteur_adresse?: string | null;
+}
+
+export interface EncaissementCreance {
+  id: string;
+  creance_id: string;
+  montant: string;
+  mode: ModePaiement;
+  reference: string | null;
+  note: string | null;
+  date_paiement: string;
+  encaisse_par: string | null;
+  encaisse_par_nom?: string | null;
+  encaisse_par_prenom?: string | null;
+  created_at: string;
+}
