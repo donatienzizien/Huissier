@@ -149,7 +149,11 @@ export default function CreancesList() {
         <div className={`${SOLID.wine} rounded-xl p-4 shadow-md`}>
           <p className="text-xs text-white/75 uppercase tracking-wide font-medium">Creances actives</p>
           <p className="font-nums text-xl text-white mt-1 font-semibold">
-            {result?.data.filter((c) => c.statut === 'ACTIVE').length ?? 0}
+            {result?.data.filter(
+              (c) =>
+                c.statut === 'ACTIVE' ||
+                c.statut === 'PARTIELLEMENT_ENCAISSEE',
+            ).length ?? 0}
           </p>
         </div>
       </div>

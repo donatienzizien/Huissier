@@ -1,4 +1,4 @@
-import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+﻿import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { RecouvrementService } from '../recouvrement/recouvrement.service';
 
 describe('RecouvrementService', () => {
@@ -277,11 +277,14 @@ describe('RecouvrementService', () => {
       }
 
       if (sql.includes('UPDATE creances')) {
+        expect(sql).toContain("WHEN $4::numeric > 0 THEN 'PARTIELLEMENT_ENCAISSEE'");
+        expect(params).toEqual([false, huissier.sub, 'creance-id', 25000]);
+
         return {
           rows: [
             {
               ...creanceActive,
-              statut: 'ACTIVE',
+              statut: 'PARTIELLEMENT_ENCAISSEE',
             },
           ],
         };
@@ -301,7 +304,7 @@ describe('RecouvrementService', () => {
       huissier,
     );
 
-    expect(result.creance.statut).toBe('ACTIVE');
+    expect(result.creance.statut).toBe('PARTIELLEMENT_ENCAISSEE');
     expect(result.encaissement.id).toBe('encaissement-id');
     expect(historique.join(' ')).toContain('ENCAISSEMENT_ENREGISTRE');
     expect(historique.join(' ')).not.toContain(

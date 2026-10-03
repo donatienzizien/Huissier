@@ -587,13 +587,17 @@ export class RecouvrementService {
 
       const updated = await client.query(
         `UPDATE creances
-         SET statut = CASE WHEN $1 THEN 'SOLDEE' ELSE statut END,
+         SET statut = CASE
+               WHEN $1 THEN 'SOLDEE'
+               WHEN $4::numeric > 0 THEN 'PARTIELLEMENT_ENCAISSEE'
+               ELSE statut
+             END,
              cloturee_par = CASE WHEN $1 THEN $2 ELSE cloturee_par END,
              cloturee_le = CASE WHEN $1 THEN now() ELSE cloturee_le END,
              updated_at = now()
          WHERE id = $3
          RETURNING *`,
-        [estSoldee, user.sub, id],
+        [estSoldee, user.sub, id, totalEncaisse],
       );
 
       await client.query(
@@ -640,9 +644,12 @@ export class RecouvrementService {
     const creance = await this.findOne(id, user);
     this.verifierModificationDossier(creance, user);
 
-    if (dto.statut === 'SOLDEE') {
+    if (
+      dto.statut === 'SOLDEE' ||
+      dto.statut === 'PARTIELLEMENT_ENCAISSEE'
+    ) {
       throw new BadRequestException(
-        "Une créance est soldée automatiquement lorsque les encaissements atteignent son montant initial.",
+        'Les statuts de paiement sont calcules automatiquement a partir des encaissements.',
       );
     }
 
