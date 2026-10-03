@@ -520,7 +520,10 @@ export default function CreanceDetail() {
               const prochainStatut = value as StatutCreance;
               const reserveHuissier = prochainStatut === 'ABANDONNEE';
 
-              if (prochainStatut === 'SOLDEE') {
+              if (
+                prochainStatut === 'SOLDEE' ||
+                prochainStatut === 'PARTIELLEMENT_ENCAISSEE'
+              ) {
                 return null;
               }
 

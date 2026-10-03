@@ -440,6 +440,7 @@ export interface PaginatedResult<T> {
 export type StatutCreance =
   | 'BROUILLON'
   | 'ACTIVE'
+  | 'PARTIELLEMENT_ENCAISSEE'
   | 'EN_NEGOCIATION'
   | 'SUSPENDUE'
   | 'SOLDEE'
@@ -448,6 +449,7 @@ export type StatutCreance =
 export const LABELS_STATUT_CREANCE: Record<StatutCreance, string> = {
   BROUILLON: 'Brouillon',
   ACTIVE: 'Active',
+  PARTIELLEMENT_ENCAISSEE: 'Partiellement encaissée',
   EN_NEGOCIATION: 'En negociation',
   SUSPENDUE: 'Suspendue',
   SOLDEE: 'Soldee',
