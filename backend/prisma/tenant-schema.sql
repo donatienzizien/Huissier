@@ -141,7 +141,7 @@ CREATE TABLE "{{SCHEMA}}".creances (
   reference TEXT,
   montant_initial NUMERIC(14,2) NOT NULL CHECK (montant_initial > 0),
   statut TEXT NOT NULL DEFAULT 'ACTIVE'
-    CHECK (statut IN ('BROUILLON', 'ACTIVE', 'EN_NEGOCIATION', 'SUSPENDUE', 'SOLDEE', 'ABANDONNEE')),
+    CHECK (statut IN ('BROUILLON', 'ACTIVE', 'PARTIELLEMENT_ENCAISSEE', 'EN_NEGOCIATION', 'SUSPENDUE', 'SOLDEE', 'ABANDONNEE')),
   date_exigibilite TIMESTAMPTZ,
   observations TEXT,
   cree_par UUID REFERENCES "{{SCHEMA}}".utilisateurs(id) ON DELETE SET NULL,
