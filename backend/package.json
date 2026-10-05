@@ -14,6 +14,7 @@
         "seed": "ts-node prisma/seed.ts",
         "migrate:tenant:encaissements": "ts-node prisma/migrate-tenant-encaissements.ts",
         "migrate:tenant:statut-partiel": "ts-node prisma/migrate-tenant-statut-partiel.ts",
+        "migrate:tenant:relances": "ts-node prisma/migrate-tenant-relances.ts",
         "test": "jest",
         "test:watch": "jest --watch",
         "test:cov": "jest --coverage"

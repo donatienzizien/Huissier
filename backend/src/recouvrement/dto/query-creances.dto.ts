@@ -1,4 +1,10 @@
-﻿import { IsIn, IsISO8601, IsOptional, IsUUID } from 'class-validator';
+﻿import {
+  IsBooleanString,
+  IsIn,
+  IsISO8601,
+  IsOptional,
+  IsUUID,
+} from 'class-validator';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { STATUTS_CREANCE } from './update-statut-creance.dto';
 
@@ -22,4 +28,8 @@ export class QueryCreancesDto extends PaginationQueryDto {
   @IsOptional()
   @IsISO8601()
   dateExigibiliteApres?: string;
+
+  @IsOptional()
+  @IsBooleanString()
+  enRetard?: string;
 }

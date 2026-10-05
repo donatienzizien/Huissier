@@ -172,6 +172,35 @@ CREATE INDEX idx_encaissements_creance_liste
     date_paiement DESC,
     created_at DESC
   );
+CREATE TABLE "{{SCHEMA}}".relances_creance (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  creance_id UUID NOT NULL
+    REFERENCES "{{SCHEMA}}".creances(id) ON DELETE CASCADE,
+  canal TEXT NOT NULL,
+  commentaire TEXT,
+  prochaine_action TEXT,
+  prochaine_action_le TIMESTAMPTZ,
+  relance_par UUID
+    REFERENCES "{{SCHEMA}}".utilisateurs(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT relances_creance_canal_check CHECK (
+    canal IN ('EMAIL', 'TELEPHONE', 'SMS', 'COURRIER', 'WHATSAPP', 'AUTRE')
+  ),
+  CONSTRAINT relances_creance_prochaine_action_check CHECK (
+    prochaine_action_le IS NULL
+    OR prochaine_action IS NOT NULL
+  )
+);
+
+CREATE INDEX idx_relances_creance_creance_created_at
+  ON "{{SCHEMA}}".relances_creance(
+    creance_id,
+    created_at DESC
+  );
+
+CREATE INDEX idx_relances_creance_prochaine_action
+  ON "{{SCHEMA}}".relances_creance(prochaine_action_le)
+  WHERE prochaine_action_le IS NOT NULL;
 CREATE TABLE "{{SCHEMA}}".paiements (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   facture_id  UUID NOT NULL REFERENCES "{{SCHEMA}}".factures(id) ON DELETE RESTRICT,

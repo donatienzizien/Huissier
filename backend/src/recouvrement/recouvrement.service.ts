@@ -11,6 +11,7 @@ import { UpdateCreanceDto } from './dto/update-creance.dto';
 import { UpdateStatutCreanceDto } from './dto/update-statut-creance.dto';
 import { QueryCreancesDto } from './dto/query-creances.dto';
 import { CreateEncaissementDto } from './dto/create-encaissement.dto';
+import { CreateRelanceCreanceDto } from './dto/create-relance-creance.dto';
 
 type DossierAcces = {
   id: string;
@@ -168,6 +169,7 @@ export class RecouvrementService {
       debiteurId,
       dateExigibiliteAvant,
       dateExigibiliteApres,
+      enRetard,
     } = query;
 
     const conditions: string[] = [];
@@ -196,6 +198,14 @@ export class RecouvrementService {
     if (dateExigibiliteApres) {
       params.push(dateExigibiliteApres);
       conditions.push(`cr.date_exigibilite >= $${params.length}`);
+    }
+
+    if (enRetard === 'true') {
+      conditions.push(
+        `cr.date_exigibilite IS NOT NULL
+         AND cr.date_exigibilite < CURRENT_DATE
+         AND cr.statut NOT IN ('SOLDEE', 'ABANDONNEE')`,
+      );
     }
 
     if (search) {
@@ -498,6 +508,22 @@ export class RecouvrementService {
     );
   }
 
+  async findRelances(id: string, user: AuthenticatedUser) {
+    const creance = await this.findOne(id, user);
+
+    return this.tenantDb.query(
+      `SELECT
+         r.*,
+         u.nom AS relance_par_nom,
+         u.prenom AS relance_par_prenom
+       FROM relances_creance r
+       LEFT JOIN utilisateurs u ON u.id = r.relance_par
+       WHERE r.creance_id = $1
+       ORDER BY r.created_at DESC`,
+      [creance.id],
+    );
+  }
+
   async ajouterEncaissement(
     id: string,
     dto: CreateEncaissementDto,
@@ -640,6 +666,102 @@ export class RecouvrementService {
       };
     });
   }
+
+  async ajouterRelance(
+    id: string,
+    dto: CreateRelanceCreanceDto,
+    user: AuthenticatedUser,
+  ) {
+    const creanceLecture = await this.findOne(id, user);
+    this.verifierModificationDossier(creanceLecture, user);
+
+    if (
+      creanceLecture.dossier_statut === 'CLOTURE' ||
+      creanceLecture.dossier_statut === 'ARCHIVE'
+    ) {
+      throw new BadRequestException(
+        'Impossible d ajouter une relance dans un dossier cloture ou archive.',
+      );
+    }
+
+    const prochaineAction = dto.prochaineAction?.trim() || null;
+    const prochaineActionLe = dto.prochaineActionLe ?? null;
+
+    if (prochaineActionLe && !prochaineAction) {
+      throw new BadRequestException(
+        'Une prochaine action est requise lorsque sa date est renseignee.',
+      );
+    }
+
+    return this.tenantDb.transaction(async (client) => {
+      const locked = await client.query<{
+        id: string;
+        numero: string;
+        dossier_id: string;
+        statut: string;
+      }>(
+        `SELECT id, numero, dossier_id, statut
+         FROM creances
+         WHERE id = $1
+         FOR UPDATE`,
+        [id],
+      );
+
+      const creance = locked.rows[0];
+
+      if (!creance) {
+        throw new NotFoundException('Créance introuvable.');
+      }
+
+      if (creance.statut === 'SOLDEE' || creance.statut === 'ABANDONNEE') {
+        throw new BadRequestException(
+          'Impossible d ajouter une relance sur une créance soldée ou abandonnée.',
+        );
+      }
+
+      const insertion = await client.query(
+        `INSERT INTO relances_creance (
+           creance_id,
+           canal,
+           commentaire,
+           prochaine_action,
+           prochaine_action_le,
+           relance_par
+         )
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [
+          id,
+          dto.canal,
+          dto.commentaire?.trim() || null,
+          prochaineAction,
+          prochaineActionLe,
+          user.sub,
+        ],
+      );
+
+      const relance = insertion.rows[0];
+
+      await client.query(
+        `INSERT INTO dossier_historique (dossier_id, utilisateur_id, action, details)
+         VALUES ($1, $2, 'RELANCE_CREANCE_AJOUTEE', $3)`,
+        [
+          creance.dossier_id,
+          user.sub,
+          JSON.stringify({
+            creanceId: id,
+            relanceId: relance.id,
+            canal: relance.canal,
+            prochaineAction: relance.prochaine_action,
+            prochaineActionLe: relance.prochaine_action_le,
+          }),
+        ],
+      );
+
+      return relance;
+    });
+  }
+
   async updateStatut(id: string, dto: UpdateStatutCreanceDto, user: AuthenticatedUser) {
     const creance = await this.findOne(id, user);
     this.verifierModificationDossier(creance, user);
