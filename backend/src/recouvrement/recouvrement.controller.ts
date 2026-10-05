@@ -9,6 +9,7 @@ import { UpdateCreanceDto } from './dto/update-creance.dto';
 import { UpdateStatutCreanceDto } from './dto/update-statut-creance.dto';
 import { QueryCreancesDto } from './dto/query-creances.dto';
 import { CreateEncaissementDto } from './dto/create-encaissement.dto';
+import { CreateRelanceCreanceDto } from './dto/create-relance-creance.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('recouvrement')
@@ -39,6 +40,24 @@ export class RecouvrementController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.recouvrementService.update(id, dto, user);
+  }
+
+  @Get(':id/relances')
+  findRelances(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.recouvrementService.findRelances(id, user);
+  }
+
+  @Roles('HUISSIER', 'CLERC')
+  @Post(':id/relances')
+  ajouterRelance(
+    @Param('id') id: string,
+    @Body() dto: CreateRelanceCreanceDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.recouvrementService.ajouterRelance(id, dto, user);
   }
 
   @Get(':id/encaissements')

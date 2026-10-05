@@ -1,4 +1,4 @@
-﻿import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { RecouvrementService } from '../recouvrement/recouvrement.service';
 
 describe('RecouvrementService', () => {
@@ -309,6 +309,159 @@ describe('RecouvrementService', () => {
     expect(historique.join(' ')).toContain('ENCAISSEMENT_ENREGISTRE');
     expect(historique.join(' ')).not.toContain(
       'CREANCE_SOLDEE_PAR_ENCAISSEMENT',
+    );
+  });
+  it('ajoute une relance et trace l historique du dossier', async () => {
+    const historique: string[] = [];
+
+    const creanceAvecDossierOuvert: any = {
+      ...creanceActive,
+      dossier_statut: 'OUVERT',
+    };
+
+    const { service } = makeService({
+      queryOne: jest.fn().mockResolvedValue(creanceAvecDossierOuvert),
+      transaction: jest.fn(async (callback) =>
+        callback({
+          query: jest.fn(async (sql: string) => {
+            if (sql.includes('SELECT id, numero, dossier_id, statut')) {
+              return { rows: [creanceActive] };
+            }
+
+            if (sql.includes('INSERT INTO relances_creance')) {
+              return {
+                rows: [
+                  {
+                    id: 'relance-id',
+                    creance_id: 'creance-id',
+                    canal: 'TELEPHONE',
+                    prochaine_action: 'Rappeler le debiteur',
+                    prochaine_action_le: '2026-10-10T09:00:00.000Z',
+                  },
+                ],
+              };
+            }
+
+            if (sql.includes('INSERT INTO dossier_historique')) {
+              historique.push(sql);
+              return { rows: [] };
+            }
+
+            return { rows: [] };
+          }),
+        }),
+      ),
+    });
+
+    const result = await service.ajouterRelance(
+      'creance-id',
+      {
+        canal: 'TELEPHONE',
+        commentaire: 'Promesse de paiement.',
+        prochaineAction: 'Rappeler le debiteur',
+        prochaineActionLe: '2026-10-10T09:00:00.000Z',
+      },
+      huissier,
+    );
+
+    expect(result.id).toBe('relance-id');
+    expect(historique.join(' ')).toContain('RELANCE_CREANCE_AJOUTEE');
+  });
+
+  it('refuse une relance sur une creance soldee', async () => {
+    const creanceSoldee: any = {
+      ...creanceActive,
+      statut: 'SOLDEE',
+      dossier_statut: 'OUVERT',
+    };
+
+    const { service } = makeService({
+      queryOne: jest.fn().mockResolvedValue(creanceSoldee),
+      transaction: jest.fn(async (callback) =>
+        callback({
+          query: jest.fn(async (sql: string) => {
+            if (sql.includes('SELECT id, numero, dossier_id, statut')) {
+              return { rows: [creanceSoldee] };
+            }
+
+            return { rows: [] };
+          }),
+        }),
+      ),
+    });
+
+    await expect(
+      service.ajouterRelance(
+        'creance-id',
+        { canal: 'EMAIL' },
+        huissier,
+      ),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('refuse une relance par un clerc non responsable', async () => {
+    const creanceAutreClerc: any = {
+      ...creanceActive,
+      assigne_clerc_id: 'autre-clerc-id',
+      dossier_statut: 'OUVERT',
+    };
+
+    const { service } = makeService({
+      queryOne: jest.fn().mockResolvedValue(creanceAutreClerc),
+    });
+
+    await expect(
+      service.ajouterRelance(
+        'creance-id',
+        { canal: 'SMS' },
+        clercNonAssigne,
+      ),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  it('refuse une date de prochaine action sans action associee', async () => {
+    const creanceAvecDossierOuvert: any = {
+      ...creanceActive,
+      dossier_statut: 'OUVERT',
+    };
+
+    const { service, tenantDb } = makeService({
+      queryOne: jest.fn().mockResolvedValue(creanceAvecDossierOuvert),
+    });
+
+    await expect(
+      service.ajouterRelance(
+        'creance-id',
+        {
+          canal: 'COURRIER',
+          prochaineActionLe: '2026-10-10T09:00:00.000Z',
+        },
+        huissier,
+      ),
+    ).rejects.toThrow(BadRequestException);
+
+    expect(tenantDb.transaction).not.toHaveBeenCalled();
+  });
+
+  it('retourne les relances d une creance accessible', async () => {
+    const relances = [
+      {
+        id: 'relance-id',
+        canal: 'WHATSAPP',
+      },
+    ];
+
+    const { service, tenantDb } = makeService({
+      queryOne: jest.fn().mockResolvedValue(creanceActive),
+      query: jest.fn().mockResolvedValue(relances),
+    });
+
+    const result = await service.findRelances('creance-id', huissier);
+
+    expect(result).toEqual(relances);
+    expect(tenantDb.query).toHaveBeenCalledWith(
+      expect.stringContaining('FROM relances_creance r'),
+      ['creance-id'],
     );
   });
 });
