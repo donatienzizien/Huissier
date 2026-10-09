@@ -20,7 +20,7 @@ describe('RecouvrementService', () => {
     };
 
     return {
-      service: new RecouvrementService(tenantDb),
+      service: new RecouvrementService(tenantDb, { genererPdf: jest.fn() } as any),
       tenantDb,
     };
   }
@@ -463,5 +463,153 @@ describe('RecouvrementService', () => {
       expect.stringContaining('FROM relances_creance r'),
       ['creance-id'],
     );
+  });
+  it('retourne les indicateurs du tableau de bord de recouvrement', async () => {
+    const synthese = {
+      montant_initial_total: '500000.00',
+      montant_encaisse_total: '125000.00',
+      solde_restant_total: '375000.00',
+      montant_echu: '200000.00',
+      nombre_creances_en_cours: '4',
+      nombre_creances_echues: '2',
+      a_echoir: '175000.00',
+      retard_1_30: '100000.00',
+      retard_31_60: '50000.00',
+      retard_61_90: '25000.00',
+      retard_90_plus: '25000.00',
+    };
+
+    const prochainesActions = [
+      {
+        creance_id: 'creance-id',
+        creance_numero: 'CRE-2026-0001',
+        creance_libelle: 'Dette locative',
+        dossier_id: 'dossier-id',
+        dossier_numero: 'DOS-2026-0001',
+        debiteur_nom: 'Doe',
+        debiteur_prenom: 'Jane',
+        solde_restant: '100000.00',
+        jours_retard: 12,
+        prochaine_action: 'Appeler le debiteur',
+        prochaine_action_le: '2026-10-06T09:00:00.000Z',
+      },
+    ];
+
+    const debiteursPrioritaires = [
+      {
+        debiteur_id: 'debiteur-id',
+        debiteur_nom: 'Doe',
+        debiteur_prenom: 'Jane',
+        nombre_creances: '2',
+        solde_restant: '200000.00',
+        montant_echu: '150000.00',
+      },
+    ];
+
+    const { service, tenantDb } = makeService({
+      queryOne: jest
+        .fn()
+        .mockResolvedValueOnce(synthese)
+        .mockResolvedValueOnce({ total: '1' }),
+      query: jest
+        .fn()
+        .mockResolvedValueOnce(prochainesActions)
+        .mockResolvedValueOnce(debiteursPrioritaires),
+    });
+
+    const result = await service.getTableauDeBord(huissier);
+
+    expect(result.synthese).toEqual({
+      montantInitialTotal: 500000,
+      montantEncaisseTotal: 125000,
+      soldeRestantTotal: 375000,
+      montantEchu: 200000,
+      nombreCreancesEnCours: 4,
+      nombreCreancesEchues: 2,
+      nombreActionsEchues: 1,
+    });
+
+    expect(result.balanceAgee).toEqual({
+      aEchoir: 175000,
+      retard1a30: 100000,
+      retard31a60: 50000,
+      retard61a90: 25000,
+      retard90Plus: 25000,
+    });
+
+    expect(result.prochainesActions).toEqual([
+      {
+        creanceId: 'creance-id',
+        creanceNumero: 'CRE-2026-0001',
+        creanceLibelle: 'Dette locative',
+        dossierId: 'dossier-id',
+        dossierNumero: 'DOS-2026-0001',
+        debiteurNom: 'Doe',
+        debiteurPrenom: 'Jane',
+        soldeRestant: 100000,
+        joursRetard: 12,
+        prochaineAction: 'Appeler le debiteur',
+        prochaineActionLe: '2026-10-06T09:00:00.000Z',
+      },
+    ]);
+
+    expect(result.debiteursPrioritaires).toEqual([
+      {
+        debiteurId: 'debiteur-id',
+        debiteurNom: 'Doe',
+        debiteurPrenom: 'Jane',
+        nombreCreances: 2,
+        soldeRestant: 200000,
+        montantEchu: 150000,
+      },
+    ]);
+
+    expect(tenantDb.queryOne).toHaveBeenCalledTimes(2);
+    expect(tenantDb.query).toHaveBeenCalledTimes(2);
+  });
+
+  it('limite le tableau de bord aux dossiers assignes a un agent terrain', async () => {
+    const agentTerrain: any = {
+      sub: 'agent-id',
+      role: 'AGENT_TERRAIN',
+      email: 'agent@example.test',
+    };
+
+    const { service, tenantDb } = makeService({
+      queryOne: jest
+        .fn()
+        .mockResolvedValueOnce({
+          montant_initial_total: '0',
+          montant_encaisse_total: '0',
+          solde_restant_total: '0',
+          montant_echu: '0',
+          nombre_creances_en_cours: '0',
+          nombre_creances_echues: '0',
+          a_echoir: '0',
+          retard_1_30: '0',
+          retard_31_60: '0',
+          retard_61_90: '0',
+          retard_90_plus: '0',
+        })
+        .mockResolvedValueOnce({ total: '0' }),
+      query: jest.fn().mockResolvedValue([]),
+    });
+
+    await service.getTableauDeBord(agentTerrain);
+
+    const allCalls = [
+      ...tenantDb.queryOne.mock.calls,
+      ...tenantDb.query.mock.calls,
+    ];
+
+    expect(allCalls).toHaveLength(4);
+
+    for (const [, params] of allCalls) {
+      expect(params).toEqual(['agent-id']);
+    }
+
+    expect(
+      allCalls.some(([sql]) => sql.includes('d.assigne_agent_id = $1')),
+    ).toBe(true);
   });
 });

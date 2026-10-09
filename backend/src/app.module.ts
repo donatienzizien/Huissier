@@ -21,6 +21,8 @@ import { RapportsModule } from './rapports/rapports.module';
 import { PiecesJointesModule } from './pieces-jointes/pieces-jointes.module';
 import { PortailClientModule } from './portail-client/portail-client.module';
 import { RecouvrementModule } from './recouvrement/recouvrement.module';
+import { AgendaNotificationsModule } from './agenda-notifications/agenda-notifications.module';
+import { RelancesAutomatiquesModule } from './relances-automatiques/relances-automatiques.module';
 
 @Module({
   imports: [

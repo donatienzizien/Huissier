@@ -1,24 +1,29 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Controller, UseGuards, Get, Patch, Post, Param, Body, Res, StreamableFile, Query } from '@nestjs/common';
+import { AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { AuthenticatedUser, CurrentUser } from '../auth/decorators/current-user.decorator';
 import { RecouvrementService } from './recouvrement.service';
 import { CreateCreanceDto } from './dto/create-creance.dto';
 import { UpdateCreanceDto } from './dto/update-creance.dto';
-import { UpdateStatutCreanceDto } from './dto/update-statut-creance.dto';
 import { QueryCreancesDto } from './dto/query-creances.dto';
-import { CreateEncaissementDto } from './dto/create-encaissement.dto';
 import { CreateRelanceCreanceDto } from './dto/create-relance-creance.dto';
+import { CreateEncaissementDto } from './dto/create-encaissement.dto';
+import { UpdateStatutCreanceDto } from './dto/update-statut-creance.dto';
 
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('recouvrement')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class RecouvrementController {
   constructor(private readonly recouvrementService: RecouvrementService) {}
 
   @Get()
   findAll(@Query() query: QueryCreancesDto, @CurrentUser() user: AuthenticatedUser) {
     return this.recouvrementService.findAll(query, user);
+  }
+
+  @Get('tableau-de-bord')
+  getTableauDeBord(@CurrentUser() user: AuthenticatedUser) {
+    return this.recouvrementService.getTableauDeBord(user);
   }
 
   @Get(':id')
@@ -86,5 +91,21 @@ export class RecouvrementController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.recouvrementService.updateStatut(id, dto, user);
+  }
+
+  @Get(':id/pdf')
+  async getCreancePdf(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+    @Res({ passthrough: true }) res: any,
+  ) {
+    const { buffer, filename } = await this.recouvrementService.generateCreancePdf(id, user);
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    });
+
+    return new StreamableFile(buffer);
   }
 }
