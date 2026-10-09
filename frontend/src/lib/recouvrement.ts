@@ -17,6 +17,55 @@ export interface QueryCreances {
   debiteurId?: string;
   dateExigibiliteAvant?: string;
   dateExigibiliteApres?: string;
+  enRetard?: string;
+}
+
+export interface SyntheseRecouvrement {
+  montantInitialTotal: number;
+  montantEncaisseTotal: number;
+  soldeRestantTotal: number;
+  montantEchu: number;
+  nombreCreancesEnCours: number;
+  nombreCreancesEchues: number;
+  nombreActionsEchues: number;
+}
+
+export interface BalanceAgeeRecouvrement {
+  aEchoir: number;
+  retard1a30: number;
+  retard31a60: number;
+  retard61a90: number;
+  retard90Plus: number;
+}
+
+export interface ProchaineActionRecouvrement {
+  creanceId: string;
+  creanceNumero: string;
+  creanceLibelle: string;
+  dossierId: string;
+  dossierNumero: string;
+  debiteurNom: string | null;
+  debiteurPrenom: string | null;
+  soldeRestant: number;
+  joursRetard: number;
+  prochaineAction: string;
+  prochaineActionLe: string;
+}
+
+export interface DebiteurPrioritaireRecouvrement {
+  debiteurId: string;
+  debiteurNom: string | null;
+  debiteurPrenom: string | null;
+  nombreCreances: number;
+  soldeRestant: number;
+  montantEchu: number;
+}
+
+export interface TableauDeBordRecouvrement {
+  synthese: SyntheseRecouvrement;
+  balanceAgee: BalanceAgeeRecouvrement;
+  prochainesActions: ProchaineActionRecouvrement[];
+  debiteursPrioritaires: DebiteurPrioritaireRecouvrement[];
 }
 
 export interface CreateCreancePayload {
@@ -46,6 +95,13 @@ export interface UpdateCreancePayload {
   reference?: string | null;
   dateExigibilite?: string | null;
   observations?: string | null;
+}
+
+export async function getTableauDeBordRecouvrement() {
+  const { data } = await api.get<TableauDeBordRecouvrement>(
+    '/recouvrement/tableau-de-bord',
+  );
+  return data;
 }
 
 export async function getCreances(query: QueryCreances = {}) {

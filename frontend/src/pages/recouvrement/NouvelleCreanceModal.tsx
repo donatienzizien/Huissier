@@ -1,5 +1,6 @@
-﻿import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import Modal from '../../components/Modal';
+import { api } from '../../lib/api';
 import { creerCreance } from '../../lib/recouvrement';
 
 interface Props {
@@ -8,7 +9,15 @@ interface Props {
   onCreated: () => void;
 }
 
+interface DossierRecap {
+  client_nom?: string | null;
+  client_prenom?: string | null;
+  debiteur_nom?: string | null;
+  debiteur_prenom?: string | null;
+}
+
 export default function NouvelleCreanceModal({ dossierId, onClose, onCreated }: Props) {
+  const [dossier, setDossier] = useState<DossierRecap | null>(null);
   const [libelle, setLibelle] = useState('');
   const [montantInitial, setMontantInitial] = useState('');
   const [reference, setReference] = useState('');
@@ -17,17 +26,37 @@ export default function NouvelleCreanceModal({ dossierId, onClose, onCreated }: 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    api
+      .get('/dossiers/' + dossierId)
+      .then(({ data }: { data: DossierRecap }) => setDossier(data))
+      .catch(() => setDossier(null));
+  }, [dossierId]);
+
+  const creancier = [dossier?.client_nom, dossier?.client_prenom]
+    .filter(Boolean)
+    .join(' ') || '—';
+
+  const debiteur = [dossier?.debiteur_nom, dossier?.debiteur_prenom]
+    .filter(Boolean)
+    .join(' ') || '—';
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
 
     if (libelle.trim().length < 3) {
-      setError('Saisissez un libelle d au moins 3 caracteres.');
+      setError('Saisissez un libellé d’au moins 3 caractères.');
       return;
     }
 
     const montant = Number(montantInitial);
     if (!Number.isFinite(montant) || montant <= 0) {
-      setError('Saisissez un montant superieur a zero.');
+      setError('Saisissez un montant supérieur à zéro.');
+      return;
+    }
+
+    if (!dateExigibilite) {
+      setError('Saisissez une date d’exigibilité.');
       return;
     }
 
@@ -40,36 +69,51 @@ export default function NouvelleCreanceModal({ dossierId, onClose, onCreated }: 
         libelle: libelle.trim(),
         montantInitial: montant,
         reference: reference.trim() || undefined,
-        dateExigibilite: dateExigibilite
-          ? new Date(dateExigibilite).toISOString()
-          : undefined,
+        dateExigibilite: new Date(dateExigibilite).toISOString(),
         observations: observations.trim() || undefined,
       });
       onCreated();
     } catch (err: any) {
-      setError(err.response?.data?.message?.toString() ?? 'Erreur lors de la creation de la creance.');
+      setError(
+        err.response?.data?.message?.toString() ??
+          'Erreur lors de la création de la créance.'
+      );
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <Modal title="Nouvelle creance" onClose={onClose}>
+    <Modal title="Nouvelle créance" onClose={onClose}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <div className="rounded-lg border border-navy-100 bg-navy-50 px-3 py-2">
+          <p className="text-xs font-medium text-navy-600">Créance au profit de</p>
+          <p className="text-sm font-semibold text-navy-900">{creancier}</p>
+        </div>
+
+        <div className="rounded-lg border border-wine-100 bg-wine-50 px-3 py-2">
+          <p className="text-xs font-medium text-wine-600">Créance due par</p>
+          <p className="text-sm font-semibold text-navy-900">{debiteur}</p>
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Libelle</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Libellé</label>
           <input
             required
             minLength={3}
             value={libelle}
             onChange={(event) => setLibelle(event.target.value)}
-            placeholder="Ex. Arrieres de loyer"
+            placeholder="Ex. Arriérés de loyer"
             className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold-400"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Montant initial (FCFA)</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Montant initial (FCFA)
+          </label>
           <input
             type="number"
             min={1}
@@ -81,7 +125,9 @@ export default function NouvelleCreanceModal({ dossierId, onClose, onCreated }: 
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Reference (optionnel)</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Référence (optionnel)
+          </label>
           <input
             value={reference}
             onChange={(event) => setReference(event.target.value)}
@@ -90,9 +136,12 @@ export default function NouvelleCreanceModal({ dossierId, onClose, onCreated }: 
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Date d exigibilite (optionnel)</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Date d’exigibilité
+          </label>
           <input
             type="date"
+            required
             value={dateExigibilite}
             onChange={(event) => setDateExigibilite(event.target.value)}
             className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold-400"
@@ -100,7 +149,9 @@ export default function NouvelleCreanceModal({ dossierId, onClose, onCreated }: 
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Observations (optionnel)</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">
+            Observations (optionnel)
+          </label>
           <textarea
             rows={3}
             value={observations}
@@ -116,7 +167,7 @@ export default function NouvelleCreanceModal({ dossierId, onClose, onCreated }: 
           disabled={saving}
           className="w-full bg-gold-700 hover:bg-gold-800 text-white text-sm font-medium rounded-md py-2 disabled:opacity-60"
         >
-          {saving ? 'Creation…' : 'Creer la creance'}
+          {saving ? 'Création…' : 'Créer la créance'}
         </button>
       </form>
     </Modal>

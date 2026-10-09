@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Download, HandCoins, Plus, Search } from 'lucide-react';
+import { AlertTriangle, Download, HandCoins, Plus, Search } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Badge from '../../components/Badge';
 import EmptyState from '../../components/EmptyState';
@@ -22,6 +22,7 @@ function formatFCFA(value: string | number) {
 export default function CreancesList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const dossierId = searchParams.get('dossierId') ?? '';
+  const enRetard = searchParams.get('enRetard') === 'true';
   const user = useAuthStore((state) => state.user);
   const peutCreer = user?.role === 'HUISSIER' || user?.role === 'CLERC';
 
@@ -41,6 +42,7 @@ export default function CreancesList() {
         search: search || undefined,
         statut: statut || undefined,
         dossierId: dossierId || undefined,
+        enRetard: enRetard ? 'true' : undefined,
         page,
         limit: 20,
       });
@@ -55,7 +57,7 @@ export default function CreancesList() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, statut, dossierId]);
+  }, [page, statut, dossierId, enRetard]);
 
   function handleSearchSubmit(event: FormEvent) {
     event.preventDefault();
@@ -77,6 +79,7 @@ export default function CreancesList() {
           search: search || undefined,
           statut: statut || undefined,
           dossierId: dossierId || undefined,
+        enRetard: enRetard ? 'true' : undefined,
           page: pageCourante,
           limit: 100,
         });
@@ -164,6 +167,26 @@ export default function CreancesList() {
         </div>
       )}
 
+      {enRetard && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-wine-100 bg-wine-50 px-4 py-2 text-sm text-wine-700">
+          <span className="inline-flex items-center gap-2">
+            <AlertTriangle size={16} />
+            Affichage des créances en retard : échéance dépassée et créance non soldée.
+          </span>
+          <button
+            onClick={() => {
+              const nextParams = new URLSearchParams(searchParams);
+              nextParams.delete('enRetard');
+              setSearchParams(nextParams);
+              setPage(1);
+            }}
+            className="text-xs font-medium underline hover:text-wine-950"
+          >
+            Afficher toutes les créances
+          </button>
+        </div>
+      )}
+
       {dossierId && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gold-200 bg-gold-50 px-4 py-2 text-sm text-gold-800">
           <span>Créances filtrées pour un dossier.</span>
@@ -191,6 +214,30 @@ export default function CreancesList() {
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gold-400 focus:border-gold-400"
           />
         </form>
+
+        <button
+          type="button"
+          onClick={() => {
+            const nextParams = new URLSearchParams(searchParams);
+
+            if (enRetard) {
+              nextParams.delete('enRetard');
+            } else {
+              nextParams.set('enRetard', 'true');
+            }
+
+            setSearchParams(nextParams);
+            setPage(1);
+          }}
+          className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+            enRetard
+              ? 'border-wine-700 bg-wine-700 text-white hover:bg-wine-800'
+              : 'border-wine-200 bg-wine-50 text-wine-700 hover:border-wine-400 hover:bg-wine-100'
+          }`}
+        >
+          <AlertTriangle size={15} />
+          Créances en retard
+        </button>
 
         <select
           value={statut}

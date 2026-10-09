@@ -1,8 +1,9 @@
-﻿import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, HandCoins, Pencil, Plus, Save } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import Badge from '../../components/Badge';
 import PageHeader from '../../components/PageHeader';
+import { api } from '../../lib/api';
 import {
   creerEncaissement,
   getCreance,
@@ -200,7 +201,7 @@ export default function CreanceDetail() {
     }
   }
 
-  if (loading) return <p className="text-gray-400 text-sm">Chargement…</p>;
+  if (loading) return <p className="text-gray-400 text-sm">Chargement...</p>;
   if (!creance) return <p className="text-gray-400 text-sm">Creance introuvable.</p>;
 
   return (
@@ -218,7 +219,7 @@ export default function CreanceDetail() {
         accent="gold"
         subtitle={
           <>
-            {creance.libelle} · Dossier{' '}
+            {creance.libelle ?? '—'} - Dossier{' '}
             <Link
               to={`/dossiers/${creance.dossier_id}`}
               className="font-ref text-navy-700 hover:underline"
@@ -228,17 +229,37 @@ export default function CreanceDetail() {
           </>
         }
         action={
-          peutModifier && !estFinalisee ? (
+          <>
+            {peutModifier && !estFinalisee && (
+              <button
+                onClick={() => setEditing((value) => !value)}
+                className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-gold-200 text-gold-700 hover:bg-gold-50"
+              >
+                <Pencil size={14} /> {editing ? 'Annuler' : 'Modifier'}
+              </button>
+            )}
             <button
-              onClick={() => setEditing((value) => !value)}
-              className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-gold-200 text-gold-700 hover:bg-gold-50"
+              onClick={async () => {
+                try {
+                  const res = await api.get(`/recouvrement/${creance.id}/pdf`, {
+                    responseType: 'blob',
+                  });
+                  const blob = res.data as Blob;
+                  const url = window.URL.createObjectURL(blob);
+                  window.open(url, '_blank');
+                } catch (err) {
+                  console.error(err);
+                  alert('Erreur lors de la generation du PDF');
+                }
+              }}
+              className="flex items-center gap-2 text-sm px-3 py-1.5 rounded-md border border-navy-200 text-navy-700 hover:bg-navy-50"
             >
-              <Pencil size={14} /> {editing ? 'Annuler' : 'Modifier'}
+              Exporter en PDF
             </button>
-          ) : undefined
+          </>
         }
-      />
 
+      />
       <div className="-mt-4 mb-6">
         <Badge statut={creance.statut} label={LABELS_STATUT_CREANCE[creance.statut]} />
       </div>
@@ -270,24 +291,31 @@ export default function CreanceDetail() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-xs text-gray-500">Debiteur</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
+        <div className="bg-white rounded-lg border border-navy-100 p-4">
+          <p className="text-xs font-medium text-navy-600">Créancier</p>
           <p className="text-base font-semibold text-navy-900 mt-1">
-            {creance.debiteur_nom} {creance.debiteur_prenom ?? ''}
+            {[creance.client_nom, creance.client_prenom].filter(Boolean).join(' ') || '—'}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">Client mandant</p>
+        </div>
+
+        <div className="bg-white rounded-lg border border-wine-100 p-4">
+          <p className="text-xs font-medium text-wine-600">Débiteur poursuivi</p>
+          <p className="text-base font-semibold text-navy-900 mt-1">
+            {[creance.debiteur_nom, creance.debiteur_prenom].filter(Boolean).join(' ') || '—'}
           </p>
           {creance.debiteur_telephone && (
-            <p className="text-xs text-gray-500 mt-1">
-              {creance.debiteur_telephone}
-            </p>
+            <p className="text-xs text-gray-500 mt-1">{creance.debiteur_telephone}</p>
           )}
         </div>
+
         <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <p className="text-xs text-gray-500">Date d exigibilite</p>
+          <p className="text-xs font-medium text-gray-600">Date d’exigibilité</p>
           <p className="text-base font-semibold text-navy-900 mt-1">
             {creance.date_exigibilite
               ? new Date(creance.date_exigibilite).toLocaleDateString('fr-FR')
-              : 'Non renseignee'}
+              : 'Non renseignée'}
           </p>
         </div>
       </div>
@@ -297,10 +325,10 @@ export default function CreanceDetail() {
           <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5 text-sm">
             <div>
               <dt className="text-xs text-gray-500">Reference</dt>
-              <dd className="mt-1 text-navy-900">{creance.reference ?? '—'}</dd>
+              <dd className="mt-1 text-navy-900">{creance.numero ?? creance.reference ?? '-'}</dd>
             </div>
             <div>
-              <dt className="text-xs text-gray-500">Client mandant</dt>
+              <dt className="text-xs text-gray-500">Créancier</dt>
               <dd className="mt-1 text-navy-900">
                 {creance.client_nom} {creance.client_prenom ?? ''}
               </dd>
@@ -382,7 +410,7 @@ export default function CreanceDetail() {
             disabled={saving}
             className="inline-flex items-center gap-2 bg-gold-700 hover:bg-gold-800 text-white text-sm font-medium rounded-md px-4 py-2 disabled:opacity-60"
           >
-            <Save size={15} /> {saving ? 'Enregistrement…' : 'Enregistrer'}
+            <Save size={15} /> {saving ? 'Enregistrement...' : 'Enregistrer'}
           </button>
         </form>
       )}
@@ -407,14 +435,12 @@ export default function CreanceDetail() {
                   <div>
                     <p className="text-sm font-medium text-navy-900">
                       {LABELS_MODE_PAIEMENT[encaissement.mode]}
-                      {encaissement.reference ? ` · ${encaissement.reference}` : ''}
+                      {encaissement.reference ? ` - ${encaissement.reference}` : ''}
                     </p>
                     <p className="mt-1 text-xs text-gray-500">
                       {formatDate(encaissement.date_paiement)}
                       {encaissement.encaisse_par_nom
-                        ? ` · ${encaissement.encaisse_par_nom} ${
-                            encaissement.encaisse_par_prenom ?? ''
-                          }`
+                        ? ` - ${encaissement.encaisse_par_nom} ${encaissement.encaisse_par_prenom ?? ''}`
                         : ''}
                     </p>
                     {encaissement.note && (
@@ -503,7 +529,7 @@ export default function CreanceDetail() {
             >
               <Plus size={15} />{' '}
               {savingEncaissement
-                ? 'Enregistrement…'
+                ? 'Enregistrement...'
                 : 'Valider l encaissement'}
             </button>
           </form>
