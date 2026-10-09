@@ -36,7 +36,7 @@ export class DossiersService {
     }
 
     const debiteur = await this.tenantDb.queryOne<{ id: string }>(
-      `SELECT id FROM clients WHERE id = $1 AND role_tiers = 'DEBITEUR'`,
+      `SELECT id FROM clients WHERE id = $1`,
       [dto.debiteurId],
     );
     if (!debiteur) {
@@ -277,7 +277,7 @@ export class DossiersService {
     }
 
     const debiteur = await this.tenantDb.queryOne<{ id: string }>(
-      `SELECT id FROM clients WHERE id = $1 AND role_tiers = 'DEBITEUR'`,
+      `SELECT id FROM clients WHERE id = $1`,
       [nouveauDebiteurId],
     );
     if (!debiteur) {
