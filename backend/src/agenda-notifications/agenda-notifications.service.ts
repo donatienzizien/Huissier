@@ -11,7 +11,7 @@ export class AgendaNotificationsService {
     const schemas = await this.tenantCronDb.getTenantSchemas();
 
     this.logger.log(
-      `Scan des notifications agenda pour ${schemas.length} cabinet(s).`,
+      'Scan des notifications agenda pour ' + schemas.length + ' cabinet(s).',
     );
 
     for (const schema of schemas) {
@@ -21,7 +21,10 @@ export class AgendaNotificationsService {
         });
       } catch (error: any) {
         this.logger.error(
-          `Erreur lors du traitement du cabinet ${schema} : ${error?.message ?? error}`,
+          'Erreur lors du traitement du cabinet ' +
+            schema +
+            ' : ' +
+            (error?.message ?? error),
         );
       }
     }
@@ -33,37 +36,52 @@ export class AgendaNotificationsService {
     schema: string,
     query: (sql: string, params?: any[]) => Promise<any[]>,
   ) {
-    this.logger.log(`Traitement du cabinet : ${schema}`);
+    this.logger.log('Traitement du cabinet : ' + schema);
 
-    const actionsEchues = await query(
-      `
-      SELECT a.id, a.titre, a.description, a.date_echeance, a.assigne_a,
-             u.email, u.nom AS utilisateur_nom
-      FROM agenda_actions a
-      LEFT JOIN utilisateurs u ON a.assigne_a = u.id
-      WHERE a.date_echeance < NOW()
-        AND a.statut != 'TERMINE'
-        AND (a.notifie IS NULL OR a.notifie = false)
-      `,
+    const evenements = await query(`
+      SELECT id, titre, date_debut, rappel_j1, rappel_j7,
+             rappel_j1_envoye, rappel_j7_envoye
+      FROM evenements
+      WHERE date_debut < NOW()
+    `);
+
+    this.logger.log(
+      evenements.length + ' evenement(s) passe(s) trouve(s).',
     );
 
-    this.logger.log(`${actionsEchues.length} action(s) échue(s) trouvée(s).`);
-
-    for (const action of actionsEchues) {
+    for (const evenement of evenements) {
       try {
-        await query(
-          `UPDATE agenda_actions
-           SET notifie = true, notifie_le = NOW()
-           WHERE id = $1`,
-          [action.id],
-        );
+        if (evenement.rappel_j1 && !evenement.rappel_j1_envoye) {
+          await query(
+            `UPDATE evenements
+             SET rappel_j1_envoye = true
+             WHERE id = $1`,
+            [evenement.id],
+          );
 
-        this.logger.log(
-          `Action « ${action.titre} » marquée comme notifiée (${action.utilisateur_nom}).`,
-        );
+          this.logger.log(
+            'Rappel J-1 marque comme envoye pour : ' + evenement.titre,
+          );
+        }
+
+        if (evenement.rappel_j7 && !evenement.rappel_j7_envoye) {
+          await query(
+            `UPDATE evenements
+             SET rappel_j7_envoye = true
+             WHERE id = $1`,
+            [evenement.id],
+          );
+
+          this.logger.log(
+            'Rappel J-7 marque comme envoye pour : ' + evenement.titre,
+          );
+        }
       } catch (error: any) {
         this.logger.error(
-          `Erreur pour l’action « ${action.titre} » : ${error?.message ?? error}`,
+          'Erreur pour l’evenement « ' +
+            evenement.titre +
+            ' » : ' +
+            (error?.message ?? error),
         );
       }
     }
