@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { api } from '../lib/api';
 
 interface Props {
   userId?: string | null;
@@ -7,13 +8,37 @@ interface Props {
   className?: string;
 }
 
-// Tente de charger la photo de profil de l'utilisateur ; si elle
-// n'existe pas (404) ou si aucun userId n'est fourni, retombe sur les
-// initiales — même fallback que l'ancien affichage, sans changement de
-// comportement visible pour les utilisateurs sans photo.
 export default function UserAvatar({ userId, initiales, size = 28, className = '' }: Props) {
+  const [urlSignee, setUrlSignee] = useState<string | null>(null);
   const [echec, setEchec] = useState(false);
-  const afficherImage = Boolean(userId) && !echec;
+
+  useEffect(() => {
+    let annule = false;
+
+    async function chargerAvatar() {
+      setUrlSignee(null);
+      setEchec(false);
+
+      if (!userId) return;
+
+      try {
+        const { data } = await api.get<{ url: string }>(
+          `/avatars/${userId}/signed-url`,
+        );
+        if (!annule) setUrlSignee(data.url);
+      } catch {
+        if (!annule) setEchec(true);
+      }
+    }
+
+    chargerAvatar();
+
+    return () => {
+      annule = true;
+    };
+  }, [userId]);
+
+  const afficherImage = Boolean(urlSignee) && !echec;
 
   return (
     <span
@@ -22,7 +47,7 @@ export default function UserAvatar({ userId, initiales, size = 28, className = '
     >
       {afficherImage ? (
         <img
-          src={`/api/avatars/${userId}`}
+          src={urlSignee as string}
           alt=""
           className="w-full h-full object-cover"
           onError={() => setEchec(true)}
