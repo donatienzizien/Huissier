@@ -47,6 +47,8 @@ import { RelancesAutomatiquesModule } from './relances-automatiques/relances-aut
     PiecesJointesModule,
     PortailClientModule,
     RecouvrementModule,
+    AgendaNotificationsModule,
+    RelancesAutomatiquesModule,
   ],
 })
 export class AppModule implements NestModule {
