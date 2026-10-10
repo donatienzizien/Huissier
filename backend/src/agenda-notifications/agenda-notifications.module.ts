@@ -9,6 +9,6 @@ import { TenantCronDbService } from '../tenant/tenant-cron-db.service';
     TenantCronDbService,
     AgendaNotificationsCron,
   ],
-  exports: [AgendaNotificationsModule],
+  exports: [AgendaNotificationsService],
 })
 export class AgendaNotificationsModule {}
