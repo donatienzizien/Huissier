@@ -1,9 +1,14 @@
 ﻿import { Module } from '@nestjs/common';
 import { AgendaNotificationsService } from './agenda-notifications.service';
-import { TenantDbService } from '../tenant/tenant-db.service';
+import { AgendaNotificationsCron } from './agenda-notifications.cron';
+import { TenantCronDbService } from '../tenant/tenant-cron-db.service';
 
 @Module({
-  providers: [AgendaNotificationsService, TenantDbService],
-  exports: [AgendaNotificationsService],
+  providers: [
+    AgendaNotificationsService,
+    TenantCronDbService,
+    AgendaNotificationsCron,
+  ],
+  exports: [AgendaNotificationsModule],
 })
 export class AgendaNotificationsModule {}
