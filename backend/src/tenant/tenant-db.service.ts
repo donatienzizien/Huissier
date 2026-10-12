@@ -2,12 +2,6 @@
 import { Pool, PoolClient } from 'pg';
 import { TenantContextService } from './tenant-context.service';
 
-// Prisma ne supporte pas nativement des schÃ©mas crÃ©Ã©s dynamiquement Ã 
-// l'exÃ©cution (le "multiSchema" preview exige une liste statique connue au
-// `generate`). Les tables tenant sont donc provisionnÃ©es en SQL brut
-// (tenant-schema.sql) et interrogÃ©es ici via `pg`, avec `search_path`
-// verrouillÃ© sur le schÃ©ma du cabinet courant â€” c'est ce qui garantit
-// l'isolation totale entre cabinets.
 const poolCache = new Map<string, Pool>();
 
 function getPool(): Pool {
@@ -28,15 +22,24 @@ function getPool(): Pool {
 export class TenantDbService {
   constructor(private readonly tenantContext: TenantContextService) {}
 
-  private async withClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  private async withClient<T>(
+    fn: (client: PoolClient) => Promise<T>,
+  ): Promise<T> {
     const { schemaName } = this.tenantContext.get();
     const pool = getPool();
     const client = await pool.connect();
+
     try {
-      // Identifiant de schÃ©ma non paramÃ©trable en SQL -> validÃ© strictement
-      // en amont (slug alphanumÃ©rique) lors de la crÃ©ation du cabinet.
-      await client.query(`SET search_path TO "${schemaName}"`);
-      return await fn(client);
+      await client.query('BEGIN');
+      await client.query(`SET LOCAL search_path TO "${schemaName}"`);
+
+      const result = await fn(client);
+
+      await client.query('COMMIT');
+      return result;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
     } finally {
       client.release();
     }
@@ -55,17 +58,6 @@ export class TenantDbService {
   }
 
   async transaction<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
-    return this.withClient(async (client) => {
-      try {
-        await client.query('BEGIN');
-        const result = await fn(client);
-        await client.query('COMMIT');
-        return result;
-      } catch (err) {
-        await client.query('ROLLBACK');
-        throw err;
-      }
-    });
+    return this.withClient(fn);
   }
 }
-
