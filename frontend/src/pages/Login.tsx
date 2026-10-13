@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+﻿import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuthStore } from '../store/auth';
@@ -14,7 +14,7 @@ function extractErrorMessage(err: any): string {
   if (typeof raw === 'string' && raw.trim().length > 0) {
     return raw;
   }
-  return 'Identifiants invalides. Vérifiez votre email et mot de passe.';
+  return 'Identifiants invalides. VÃ©rifiez votre email et mot de passe.';
 }
 
 export default function Login() {
@@ -30,7 +30,7 @@ export default function Login() {
     setError(null);
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/login', { email, motDePasse });
+      const { data } = await api.post('/auth/login', { email, motDePasse }, { headers: { 'x-cabinet-slug': 'test2' } });
       setSession(data.user, data.accessToken, data.refreshToken);
       navigate('/dashboard');
     } catch (err: any) {
@@ -53,7 +53,7 @@ export default function Login() {
         </div>
         <div className="relative">
           <p className="font-serif text-2xl leading-snug text-white/95">
-            La gestion de votre cabinet, du dossier à l'acte signifié.
+            La gestion de votre cabinet, du dossier Ã  l'acte signifiÃ©.
           </p>
           <p className="text-sm text-navy-100/60 mt-4">
             Plateforme de gestion pour cabinets d'huissiers de justice.
@@ -74,7 +74,7 @@ export default function Login() {
 
           <h1 className="font-serif text-2xl text-navy-900">Connexion</h1>
           <p className="text-sm text-gray-500 mt-1.5 mb-8">
-            Accédez à l'espace de votre cabinet.
+            AccÃ©dez Ã  l'espace de votre cabinet.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -104,7 +104,7 @@ export default function Login() {
                 value={motDePasse}
                 onChange={(e) => setMotDePasse(e.target.value)}
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy-500/40 focus:border-navy-500"
-                placeholder="••••••••"
+                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
               />
             </div>
 
@@ -119,7 +119,7 @@ export default function Login() {
               disabled={loading}
               className="w-full bg-navy-700 hover:bg-navy-800 transition-colors text-white text-sm font-medium rounded-md py-2.5 disabled:opacity-60"
             >
-              {loading ? 'Connexion…' : 'Se connecter'}
+              {loading ? 'Connexionâ€¦' : 'Se connecter'}
             </button>
           </form>
         </div>
@@ -127,3 +127,4 @@ export default function Login() {
     </div>
   );
 }
+
