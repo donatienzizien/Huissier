@@ -97,7 +97,10 @@ export class RapportsService {
       ),
     ]);
 
+    const schemaActif = this.tenantContext.get().schemaName;
+    console.log('DASHBOARD SCHEMA =>', schemaActif);
     return {
+      schemaUtilise: schemaActif,
       dossiersActifs: Number(dossiersActifs?.total ?? 0),
       chiffreAffairesMois: Number(caMois?.total ?? 0),
       actesGeneresMois: Number(actesMois?.total ?? 0),
@@ -232,3 +235,4 @@ export class RapportsService {
     return Buffer.from(arrayBuffer as ArrayBuffer);
   }
 }
+
