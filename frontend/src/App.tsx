@@ -13,6 +13,7 @@ const FacturesList = lazy(() => import('./pages/facturation/FacturesList'));
 const FactureDetail = lazy(() => import('./pages/facturation/FactureDetail'));
 const CreancesList = lazy(() => import('./pages/recouvrement/CreancesList'));
 const CreanceDetail = lazy(() => import('./pages/recouvrement/CreanceDetail'));
+const RecouvrementDashboard = lazy(() => import('./pages/recouvrement/RecouvrementDashboard'));
 const Agenda = lazy(() => import('./pages/agenda/Agenda'));
 const Rapports = lazy(() => import('./pages/rapports/Rapports'));
 const Administration = lazy(() => import('./pages/administration/Administration'));
@@ -72,6 +73,7 @@ export default function App() {
             <Route path="/facturation" element={<FacturesList />} />
             <Route path="/facturation/:id" element={<FactureDetail />} />
             <Route path="/recouvrement" element={<CreancesList />} />
+            <Route path="/recouvrement/tableau-de-bord" element={<RecouvrementDashboard />} />
             <Route path="/recouvrement/:id" element={<CreanceDetail />} />
             <Route path="/agenda" element={<Agenda />} />
             <Route path="/rapports" element={<Rapports />} />

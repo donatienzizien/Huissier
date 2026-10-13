@@ -11,15 +11,17 @@ export class TenantMiddleware implements NestMiddleware {
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const cabinetSlug =
-      (req.headers['x-cabinet'] as string) ||
-      req.hostname.split('.')[0];
+    const host = req.hostname;
+    const subdomain = host.split('.')[0];
 
     const reserved = ['app', 'api', 'www', 'admin', 'localhost'];
 
-    if (cabinetSlug && !reserved.includes(cabinetSlug)) {
+    const headerSlug = req.headers['x-cabinet-slug'] as string | undefined;
+    const slug = headerSlug || subdomain;
+
+    if (slug && !reserved.includes(slug)) {
       const cabinet = await this.prisma.cabinet.findUnique({
-        where: { slug: cabinetSlug },
+        where: { slug },
       });
 
       if (cabinet && cabinet.statut === 'ACTIF') {

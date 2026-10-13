@@ -10,6 +10,7 @@ import { CreateCreanceDto } from './dto/create-creance.dto';
 import { UpdateCreanceDto } from './dto/update-creance.dto';
 import { UpdateStatutCreanceDto } from './dto/update-statut-creance.dto';
 import { QueryCreancesDto } from './dto/query-creances.dto';
+import { PdfService } from '../pdf/pdf.service';
 import { CreateEncaissementDto } from './dto/create-encaissement.dto';
 import { CreateRelanceCreanceDto } from './dto/create-relance-creance.dto';
 
@@ -24,7 +25,7 @@ type DossierAcces = {
 
 @Injectable()
 export class RecouvrementService {
-  constructor(private readonly tenantDb: TenantDbService) {}
+  constructor(private readonly tenantDb: TenantDbService, private readonly pdfService: PdfService) {}
 
   private async prochainNumero(client?: { query: Function }): Promise<string> {
     const annee = new Date().getFullYear();
@@ -130,7 +131,7 @@ export class RecouvrementService {
           numero,
           dto.dossierId,
           dto.libelle.trim(),
-          dto.reference?.trim() || null,
+          dto.reference?.trim() || numero,
           dto.montantInitial,
           dto.dateExigibilite ?? null,
           dto.observations?.trim() || null,
@@ -270,6 +271,257 @@ export class RecouvrementService {
     };
   }
 
+  async getTableauDeBord(user: AuthenticatedUser) {
+    const params: unknown[] = [];
+    const agentCondition =
+      user.role === 'AGENT_TERRAIN'
+        ? (() => {
+            params.push(user.sub);
+            return `AND d.assigne_agent_id = $${params.length}`;
+          })()
+        : '';
+
+    const baseCreances = `
+      FROM creances cr
+      JOIN dossiers d ON d.id = cr.dossier_id
+      LEFT JOIN clients deb ON deb.id = d.debiteur_id
+      LEFT JOIN (
+        SELECT creance_id, COALESCE(SUM(montant), 0) AS total_encaisse
+        FROM encaissements_creance
+        GROUP BY creance_id
+      ) enc ON enc.creance_id = cr.id
+      WHERE cr.statut IN (
+        'ACTIVE',
+        'PARTIELLEMENT_ENCAISSEE',
+        'EN_NEGOCIATION',
+        'SUSPENDUE'
+      )
+      ${agentCondition}
+    `;
+
+    const syntheseRow = await this.tenantDb.queryOne<{
+      montant_initial_total: string;
+      montant_encaisse_total: string;
+      solde_restant_total: string;
+      montant_echu: string;
+      nombre_creances_en_cours: string;
+      nombre_creances_echues: string;
+      a_echoir: string;
+      retard_1_30: string;
+      retard_31_60: string;
+      retard_61_90: string;
+      retard_90_plus: string;
+    }>(
+      `SELECT
+         COALESCE(SUM(cr.montant_initial), 0) AS montant_initial_total,
+         COALESCE(SUM(enc.total_encaisse), 0) AS montant_encaisse_total,
+         COALESCE(SUM(
+           GREATEST(cr.montant_initial - enc.total_encaisse, 0)
+         ), 0) AS solde_restant_total,
+         COALESCE(SUM(
+           CASE
+             WHEN cr.date_exigibilite < CURRENT_DATE
+             THEN GREATEST(cr.montant_initial - enc.total_encaisse, 0)
+             ELSE 0
+           END
+         ), 0) AS montant_echu,
+         COUNT(*) AS nombre_creances_en_cours,
+         COUNT(*) FILTER (
+           WHERE cr.date_exigibilite < CURRENT_DATE
+         ) AS nombre_creances_echues,
+         COALESCE(SUM(
+           CASE
+             WHEN cr.date_exigibilite IS NULL
+               OR cr.date_exigibilite >= CURRENT_DATE
+             THEN GREATEST(cr.montant_initial - enc.total_encaisse, 0)
+             ELSE 0
+           END
+         ), 0) AS a_echoir,
+         COALESCE(SUM(
+           CASE
+             WHEN CURRENT_DATE - cr.date_exigibilite::date BETWEEN 1 AND 30
+             THEN GREATEST(cr.montant_initial - enc.total_encaisse, 0)
+             ELSE 0
+           END
+         ), 0) AS retard_1_30,
+         COALESCE(SUM(
+           CASE
+             WHEN CURRENT_DATE - cr.date_exigibilite::date BETWEEN 31 AND 60
+             THEN GREATEST(cr.montant_initial - enc.total_encaisse, 0)
+             ELSE 0
+           END
+         ), 0) AS retard_31_60,
+         COALESCE(SUM(
+           CASE
+             WHEN CURRENT_DATE - cr.date_exigibilite::date BETWEEN 61 AND 90
+             THEN GREATEST(cr.montant_initial - enc.total_encaisse, 0)
+             ELSE 0
+           END
+         ), 0) AS retard_61_90,
+         COALESCE(SUM(
+           CASE
+             WHEN CURRENT_DATE - cr.date_exigibilite::date > 90
+             THEN GREATEST(cr.montant_initial - enc.total_encaisse, 0)
+             ELSE 0
+           END
+         ), 0) AS retard_90_plus
+       ${baseCreances}`,
+      params as any[],
+    );
+
+    const prochainesActions = await this.tenantDb.query<{
+      creance_id: string;
+      creance_numero: string;
+      creance_libelle: string;
+      dossier_id: string;
+      dossier_numero: string;
+      debiteur_nom: string | null;
+      debiteur_prenom: string | null;
+      solde_restant: string;
+      jours_retard: number;
+      prochaine_action: string;
+      prochaine_action_le: string;
+    }>(
+      `WITH prochaines_relances AS (
+         SELECT DISTINCT ON (r.creance_id)
+           r.creance_id,
+           r.prochaine_action,
+           r.prochaine_action_le
+         FROM relances_creance r
+         WHERE r.prochaine_action_le IS NOT NULL
+           AND r.prochaine_action IS NOT NULL
+         ORDER BY r.creance_id, r.prochaine_action_le ASC, r.created_at DESC
+       )
+       SELECT
+         cr.id AS creance_id,
+         cr.numero AS creance_numero,
+         cr.libelle AS creance_libelle,
+         d.id AS dossier_id,
+         d.numero AS dossier_numero,
+         deb.nom AS debiteur_nom,
+         deb.prenom AS debiteur_prenom,
+         GREATEST(cr.montant_initial - COALESCE(enc.total_encaisse, 0), 0)
+           AS solde_restant,
+         GREATEST(CURRENT_DATE - cr.date_exigibilite::date, 0)
+           AS jours_retard,
+         pr.prochaine_action,
+         pr.prochaine_action_le
+       FROM prochaines_relances pr
+       JOIN creances cr ON cr.id = pr.creance_id
+       JOIN dossiers d ON d.id = cr.dossier_id
+       LEFT JOIN clients deb ON deb.id = d.debiteur_id
+       LEFT JOIN (
+         SELECT creance_id, COALESCE(SUM(montant), 0) AS total_encaisse
+         FROM encaissements_creance
+         GROUP BY creance_id
+       ) enc ON enc.creance_id = cr.id
+       WHERE cr.statut IN (
+         'ACTIVE',
+         'PARTIELLEMENT_ENCAISSEE',
+         'EN_NEGOCIATION',
+         'SUSPENDUE'
+       )
+       ${agentCondition}
+       ORDER BY pr.prochaine_action_le ASC, solde_restant DESC
+       LIMIT 5`,
+      params as any[],
+    );
+
+    const debiteursPrioritaires = await this.tenantDb.query<{
+      debiteur_id: string;
+      debiteur_nom: string | null;
+      debiteur_prenom: string | null;
+      nombre_creances: string;
+      solde_restant: string;
+      montant_echu: string;
+    }>(
+      `SELECT
+         deb.id AS debiteur_id,
+         deb.nom AS debiteur_nom,
+         deb.prenom AS debiteur_prenom,
+         COUNT(*) AS nombre_creances,
+         COALESCE(SUM(
+           GREATEST(cr.montant_initial - enc.total_encaisse, 0)
+         ), 0) AS solde_restant,
+         COALESCE(SUM(
+           CASE
+             WHEN cr.date_exigibilite < CURRENT_DATE
+             THEN GREATEST(cr.montant_initial - enc.total_encaisse, 0)
+             ELSE 0
+           END
+         ), 0) AS montant_echu
+       ${baseCreances}
+         AND d.debiteur_id IS NOT NULL
+       GROUP BY deb.id, deb.nom, deb.prenom
+       ORDER BY montant_echu DESC, solde_restant DESC
+       LIMIT 5`,
+      params as any[],
+    );
+
+    const actionsEchuesRow = await this.tenantDb.queryOne<{ total: string }>(
+      `WITH prochaines_relances AS (
+         SELECT DISTINCT ON (r.creance_id)
+           r.creance_id,
+           r.prochaine_action_le
+         FROM relances_creance r
+         WHERE r.prochaine_action_le IS NOT NULL
+         ORDER BY r.creance_id, r.prochaine_action_le ASC, r.created_at DESC
+       )
+       SELECT COUNT(*) AS total
+       FROM prochaines_relances pr
+       JOIN creances cr ON cr.id = pr.creance_id
+       JOIN dossiers d ON d.id = cr.dossier_id
+       WHERE cr.statut IN (
+         'ACTIVE',
+         'PARTIELLEMENT_ENCAISSEE',
+         'EN_NEGOCIATION',
+         'SUSPENDUE'
+       )
+         AND pr.prochaine_action_le <= now()
+       ${agentCondition}`,
+      params as any[],
+    );
+
+    return {
+      synthese: {
+        montantInitialTotal: Number(syntheseRow?.montant_initial_total ?? 0),
+        montantEncaisseTotal: Number(syntheseRow?.montant_encaisse_total ?? 0),
+        soldeRestantTotal: Number(syntheseRow?.solde_restant_total ?? 0),
+        montantEchu: Number(syntheseRow?.montant_echu ?? 0),
+        nombreCreancesEnCours: Number(syntheseRow?.nombre_creances_en_cours ?? 0),
+        nombreCreancesEchues: Number(syntheseRow?.nombre_creances_echues ?? 0),
+        nombreActionsEchues: Number(actionsEchuesRow?.total ?? 0),
+      },
+      balanceAgee: {
+        aEchoir: Number(syntheseRow?.a_echoir ?? 0),
+        retard1a30: Number(syntheseRow?.retard_1_30 ?? 0),
+        retard31a60: Number(syntheseRow?.retard_31_60 ?? 0),
+        retard61a90: Number(syntheseRow?.retard_61_90 ?? 0),
+        retard90Plus: Number(syntheseRow?.retard_90_plus ?? 0),
+      },
+      prochainesActions: prochainesActions.map((action) => ({
+        creanceId: action.creance_id,
+        creanceNumero: action.creance_numero,
+        creanceLibelle: action.creance_libelle,
+        dossierId: action.dossier_id,
+        dossierNumero: action.dossier_numero,
+        debiteurNom: action.debiteur_nom,
+        debiteurPrenom: action.debiteur_prenom,
+        soldeRestant: Number(action.solde_restant),
+        joursRetard: Number(action.jours_retard),
+        prochaineAction: action.prochaine_action,
+        prochaineActionLe: action.prochaine_action_le,
+      })),
+      debiteursPrioritaires: debiteursPrioritaires.map((debiteur) => ({
+        debiteurId: debiteur.debiteur_id,
+        debiteurNom: debiteur.debiteur_nom,
+        debiteurPrenom: debiteur.debiteur_prenom,
+        nombreCreances: Number(debiteur.nombre_creances),
+        soldeRestant: Number(debiteur.solde_restant),
+        montantEchu: Number(debiteur.montant_echu),
+      })),
+    };
+  }
   async findOne(id: string, user: AuthenticatedUser) {
     const creance = await this.tenantDb.queryOne<any>(
       `SELECT
@@ -814,5 +1066,102 @@ export class RecouvrementService {
     );
 
     return updated;
+  }
+
+  async generateCreancePdf(id: string, user: AuthenticatedUser): Promise<{ buffer: Buffer; filename: string }> {
+    const creance = await this.findOne(id, user);
+    let encaissements: any[] = [];
+
+    try {
+      encaissements = await this.tenantDb.query(
+        `SELECT * FROM encaissements_creance WHERE creance_id = $1 ORDER BY date_paiement DESC`,
+        [id],
+      );
+    } catch (error: any) {
+      if (error?.code !== '42P01') {
+        throw error;
+      }
+    }
+
+    const html = `
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 40px; }
+            h1 { color: #14213D; font-size: 24px; margin-bottom: 10px; }
+            .info { margin: 20px 0; }
+            .info-row { display: flex; justify-content: space-between; margin: 8px 0; }
+            .label { font-weight: bold; color: #666; }
+            table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+            th { background: #14213D; color: white; padding: 10px; text-align: left; }
+            td { padding: 8px; border-bottom: 1px solid #ddd; }
+            .total { font-size: 18px; font-weight: bold; margin-top: 20px; }
+            .parties { display: flex; gap: 20px; margin: 25px 0; }
+            .partie { flex: 1; border: 1px solid #ddd; border-radius: 8px; padding: 15px; }
+            .partie h2 { font-size: 15px; margin: 0 0 8px; color: #14213D; }
+            .partie .nom { font-size: 16px; font-weight: bold; margin: 0 0 4px; }
+            .partie p { margin: 0; color: #555; }
+            .creancier { border-color: #14213D; }
+            .debiteur { border-color: #9D2C2C; }
+          </style>
+        </head>
+        <body>
+          <h1>Fiche Créance - ${creance.numero}</h1>
+
+          <div class="parties">
+            <div class="partie creancier">
+              <h2>Créancier</h2>
+              <p class="nom">${[creance.client_nom, creance.client_prenom].filter(Boolean).join(' ') || '-'}</p>
+              <p>Client mandant</p>
+            </div>
+
+            <div class="partie debiteur">
+              <h2>Débiteur poursuivi</h2>
+              <p class="nom">${[creance.debiteur_nom, creance.debiteur_prenom].filter(Boolean).join(' ') || '-'}</p>
+              <p>${creance.debiteur_telephone ?? ''}</p>
+            </div>
+          </div>
+
+          <div class="info">
+            <div class="info-row"><span class="label">Libellé :</span> <span>${creance.libelle}</span></div>
+            <div class="info-row"><span class="label">Référence :</span> <span>${creance.reference ?? '-'}</span></div>
+            <div class="info-row"><span class="label">Dossier :</span> <span>${creance.dossier_numero ?? '-'}</span></div>
+            <div class="info-row"><span class="label">Date d’exigibilité :</span> <span>${creance.date_exigibilite ? new Date(creance.date_exigibilite).toLocaleDateString('fr-FR') : '-'}</span></div>
+            <div class="info-row"><span class="label">Statut :</span> <span>${creance.statut}</span></div>
+          </div>
+
+          <div class="info">
+            <div class="info-row"><span class="label">Montant initial :</span> <span>${Number(creance.montant_initial).toLocaleString('fr-FR')} FCFA</span></div>
+            <div class="info-row"><span class="label">Total encaissé :</span> <span>${encaissements.reduce((sum, e) => sum + Number(e.montant), 0).toLocaleString('fr-FR')} FCFA</span></div>
+            <div class="total">Solde restant : ${Math.max(0, Number(creance.montant_initial) - encaissements.reduce((sum, e) => sum + Number(e.montant), 0)).toLocaleString('fr-FR')} FCFA</div>
+          </div>
+
+          ${encaissements.length > 0 ? `
+          <h2>Historique des paiements</h2>
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Montant</th><th>Mode</th><th>Référence</th></tr>
+            </thead>
+            <tbody>
+              ${encaissements.map(e => `
+              <tr>
+                <td>${new Date(e.date_paiement).toLocaleDateString('fr-FR')}</td>
+                <td>${Number(e.montant).toLocaleString('fr-FR')} FCFA</td>
+                <td>${e.mode}</td>
+                <td>${e.reference ?? '-'}</td>
+              </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          ` : '<p>Aucun paiement enregistré.</p>'}
+        </body>
+      </html>
+    `;
+
+    const buffer = await this.pdfService.genererPdf(html, {});
+    return {
+      buffer,
+      filename: `creance-${creance.numero}.pdf`,
+    };
   }
 }

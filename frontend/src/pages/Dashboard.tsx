@@ -1,4 +1,4 @@
-﻿import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -19,6 +19,7 @@ import {
   Inbox,
   Receipt,
   RefreshCw,
+  HandCoins,
 } from 'lucide-react';
 import {
   Area,
@@ -35,6 +36,10 @@ import {
 } from 'recharts';
 import { useAuthStore } from '../store/auth';
 import { api } from '../lib/api';
+import {
+  getTableauDeBordRecouvrement,
+  TableauDeBordRecouvrement,
+} from '../lib/recouvrement';
 import {
   CaMensuel,
   DashboardKpis,
@@ -176,6 +181,10 @@ export default function Dashboard() {
   const [prochainsEvenements, setProchainsEvenements] = useState<Evenement[]>([]);
   const [loadingAgenda, setLoadingAgenda] = useState(true);
 
+  const [recouvrement, setRecouvrement] =
+    useState<TableauDeBordRecouvrement | null>(null);
+  const [loadingRecouvrement, setLoadingRecouvrement] = useState(true);
+
   const chargerKpis = useCallback(() => {
     setLoading(true);
     setErreurKpis(null);
@@ -188,6 +197,11 @@ export default function Dashboard() {
 
   useEffect(() => {
     chargerKpis();
+
+    getTableauDeBordRecouvrement()
+      .then(setRecouvrement)
+      .catch(() => undefined)
+      .finally(() => setLoadingRecouvrement(false));
 
     api
       .get<AlerteDashboard[]>('/alertes')
@@ -365,6 +379,117 @@ export default function Dashboard() {
             </div>
           );
         })}
+      </div>      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+        <section className={`rounded-xl border border-gray-200 border-t-4 ${BORDER_TOP.wine} bg-white p-5 shadow-sm transition-shadow hover:shadow-md`}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${TINT_BG.wine} ${TINT_TEXT.wine}`}>
+                <HandCoins size={17} />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-navy-900">Situation recouvrement</h2>
+                <p className="text-xs text-gray-500">Encours et priorités à traiter</p>
+              </div>
+            </div>
+            <Link
+              to="/recouvrement/tableau-de-bord"
+              className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-wine-700 hover:text-wine-900 hover:underline"
+            >
+              Détails <ArrowRight size={12} />
+            </Link>
+          </div>
+
+          {loadingRecouvrement ? (
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="h-16 rounded-lg bg-gray-100 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="rounded-lg bg-navy-50 p-3">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-navy-600">Solde à recouvrer</p>
+                <p className="mt-1 font-nums text-base font-semibold text-navy-900">
+                  {formatFCFA(recouvrement?.synthese.soldeRestantTotal ?? 0)}
+                </p>
+              </div>
+              <div className="rounded-lg bg-wine-50 p-3">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-wine-600">Montant échu</p>
+                <p className="mt-1 font-nums text-base font-semibold text-wine-700">
+                  {formatFCFA(recouvrement?.synthese.montantEchu ?? 0)}
+                </p>
+              </div>
+              <div className="rounded-lg bg-gold-50 p-3">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-gold-700">Créances échues</p>
+                <p className="mt-1 font-nums text-xl font-semibold text-gold-800">
+                  {recouvrement?.synthese.nombreCreancesEchues ?? 0}
+                </p>
+              </div>
+              <div className="rounded-lg bg-brass-50 p-3">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-brass-700">Actions échues</p>
+                <p className="mt-1 font-nums text-xl font-semibold text-brass-800">
+                  {recouvrement?.synthese.nombreActionsEchues ?? 0}
+                </p>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section className={`rounded-xl border border-gray-200 border-t-4 ${BORDER_TOP.gold} bg-white p-5 shadow-sm transition-shadow hover:shadow-md`}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${TINT_BG.gold} ${TINT_TEXT.gold}`}>
+                <PieChartIcon size={17} />
+              </div>
+              <div>
+                <h2 className="text-sm font-semibold text-navy-900">Balance âgée</h2>
+                <p className="text-xs text-gray-500">Ancienneté du solde restant</p>
+              </div>
+            </div>
+            <Link
+              to="/recouvrement/tableau-de-bord"
+              className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-gold-700 hover:text-gold-900 hover:underline"
+            >
+              Voir le détail <ArrowRight size={12} />
+            </Link>
+          </div>
+
+          {loadingRecouvrement ? (
+            <div className="mt-5">
+              <BarsSkeleton rows={5} />
+            </div>
+          ) : (
+            <div className="mt-5 space-y-3">
+              {[
+                { label: 'À échoir', value: recouvrement?.balanceAgee.aEchoir ?? 0, color: 'bg-navy-700' },
+                { label: '1 à 30 jours', value: recouvrement?.balanceAgee.retard1a30 ?? 0, color: 'bg-gold-600' },
+                { label: '31 à 60 jours', value: recouvrement?.balanceAgee.retard31a60 ?? 0, color: 'bg-amber-600' },
+                { label: '61 à 90 jours', value: recouvrement?.balanceAgee.retard61a90 ?? 0, color: 'bg-wine-600' },
+                { label: '90 jours et plus', value: recouvrement?.balanceAgee.retard90Plus ?? 0, color: 'bg-red-800' },
+              ].map((tranche) => {
+                const total = recouvrement?.synthese.soldeRestantTotal ?? 0;
+                const largeur = total > 0 ? Math.min((tranche.value / total) * 100, 100) : 0;
+
+                return (
+                  <div key={tranche.label}>
+                    <div className="mb-1 flex items-center justify-between gap-3">
+                      <span className="text-xs text-gray-600">{tranche.label}</span>
+                      <span className="font-nums text-xs font-medium text-navy-800">
+                        {formatFCFA(tranche.value)}
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                      <div
+                        className={`h-full rounded-full ${tranche.color}`}
+                        style={{ width: `${largeur}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
       </div>
 
       {peutVoirFinances && (

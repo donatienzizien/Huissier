@@ -1103,12 +1103,12 @@ function RechercheTiers({
         return;
       }
       const { data } = await api.get<PaginatedResult<Client>>('/clients', {
-        params: { search, roleTiers, limit: 5 },
+        params: { search, limit: 5 },
       });
       setResults(data.data);
     }, 300);
     return () => clearTimeout(timeout);
-  }, [search, roleTiers]);
+  }, [search]);
 
   return (
     <div>
