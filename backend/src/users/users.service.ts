@@ -193,12 +193,19 @@ export class UsersService {
       : join(STORAGE_ROOT, chemin);
   }
   async getPhotoPath(userId: string): Promise<string | null> {
+    const { schemaName } = this.tenantContext.get();
+    console.log('[AVATAR DEBUG] getPhotoPath', { schemaName, userId });
+
     const row = await this.tenantDb.queryOne<{ photo_path: string | null }>(
       `SELECT photo_path FROM utilisateurs WHERE id = $1`,
       [userId],
     );
+
+    console.log('[AVATAR DEBUG] resultat requete', row);
+
     return row?.photo_path ?? null;
   }
 }
+
 
 
