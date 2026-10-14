@@ -10,7 +10,7 @@
   UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { createReadStream } from 'fs';
+import { createReadStream, existsSync } from 'fs';
 import * as crypto from 'crypto';
 import * as path from 'path';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -115,3 +115,4 @@ export class AvatarsController {
     createReadStream(cheminAbsolu).pipe(res);
   }
 }
+
