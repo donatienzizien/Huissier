@@ -104,7 +104,7 @@ export default function Login() {
                 value={motDePasse}
                 onChange={(e) => setMotDePasse(e.target.value)}
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy-500/40 focus:border-navy-500"
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                placeholder="••••••••"
               />
             </div>
 
@@ -119,7 +119,7 @@ export default function Login() {
               disabled={loading}
               className="w-full bg-navy-700 hover:bg-navy-800 transition-colors text-white text-sm font-medium rounded-md py-2.5 disabled:opacity-60"
             >
-              {loading ? 'Connexionâ€¦' : 'Se connecter'}
+              {loading ? 'Connexion…' : 'Se connecter'}
             </button>
           </form>
         </div>
@@ -127,5 +127,7 @@ export default function Login() {
     </div>
   );
 }
+
+
 
 
