@@ -76,3 +76,8 @@ frontend/audit-frontend-workflow-*.txt
 # Rapports locaux frontend
 frontend/audit-frontend-workflow-*.txt
 frontend/verification-*.txt
+
+backend/hash-zizien.txt
+backend/src/tenant/*.bak2
+backend/src/tenant/*.bak3
+comptes-admin-loginet.txt
