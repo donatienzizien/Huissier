@@ -1,7 +1,8 @@
 ﻿import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import * as path from 'path';
 import { mkdir, unlink, writeFile } from 'fs/promises';
 import { TenantDbService } from '../tenant/tenant-db.service';
 import { TenantContextService } from '../tenant/tenant-context.service';
@@ -114,7 +115,7 @@ export class UsersService {
 
     await this.tenantDb.query(`DELETE FROM utilisateurs WHERE id = $1`, [id]);
     if (cible.photo_path) {
-      await unlink(cible.photo_path).catch(() => undefined);
+      await unlink(this.cheminAbsolu(cible.photo_path)).catch(() => undefined);
     }
     return { success: true };
   }
@@ -153,16 +154,21 @@ export class UsersService {
     );
     if (!existant) throw new NotFoundException('Utilisateur introuvable.');
 
-    const dir = this.avatarDir();
-    await mkdir(dir, { recursive: true });
-    const cheminFichier = join(dir, `${userId}${extension}`);
-    await writeFile(cheminFichier, file.buffer);
+    const { schemaName } = this.tenantContext.get();
+    const cheminRelatif = join(schemaName, 'avatars', `${userId}${extension}`);
+    const cheminAbsolu = join(STORAGE_ROOT, cheminRelatif);
 
-    if (existant.photo_path && existant.photo_path !== cheminFichier) {
-      await unlink(existant.photo_path).catch(() => undefined);
+    await mkdir(dirname(cheminAbsolu), { recursive: true });
+    await writeFile(cheminAbsolu, file.buffer);
+
+    if (existant.photo_path) {
+      const ancienChemin = this.cheminAbsolu(existant.photo_path);
+      if (ancienChemin !== cheminAbsolu) {
+        await unlink(ancienChemin).catch(() => undefined);
+      }
     }
 
-    await this.tenantDb.query(`UPDATE utilisateurs SET photo_path = $1 WHERE id = $2`, [cheminFichier, userId]);
+    await this.tenantDb.query(`UPDATE utilisateurs SET photo_path = $1 WHERE id = $2`, [cheminRelatif, userId]);
     return { success: true };
   }
 
@@ -174,12 +180,18 @@ export class UsersService {
     if (!existant) throw new NotFoundException('Utilisateur introuvable.');
 
     if (existant.photo_path) {
-      await unlink(existant.photo_path).catch(() => undefined);
+      await unlink(this.cheminAbsolu(existant.photo_path)).catch(() => undefined);
     }
     await this.tenantDb.query(`UPDATE utilisateurs SET photo_path = NULL WHERE id = $1`, [userId]);
     return { success: true };
   }
 
+
+  private cheminAbsolu(chemin: string): string {
+    return path.isAbsolute(chemin)
+      ? chemin
+      : join(STORAGE_ROOT, chemin);
+  }
   async getPhotoPath(userId: string): Promise<string | null> {
     const row = await this.tenantDb.queryOne<{ photo_path: string | null }>(
       `SELECT photo_path FROM utilisateurs WHERE id = $1`,
@@ -188,3 +200,5 @@ export class UsersService {
     return row?.photo_path ?? null;
   }
 }
+
+

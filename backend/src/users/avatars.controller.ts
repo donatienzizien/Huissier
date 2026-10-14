@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   Controller,
   ForbiddenException,
@@ -97,7 +97,9 @@ export class AvatarsController {
     const storageRoot = path.resolve(
       process.env.ACTES_STORAGE_PATH ?? path.join(process.cwd(), 'storage'),
     );
-    const cheminAbsolu = path.resolve(cheminFichier);
+    const cheminAbsolu = path.isAbsolute(cheminFichier)
+      ? path.resolve(cheminFichier)
+      : path.resolve(storageRoot, cheminFichier);
 
     if (!cheminAbsolu.startsWith(storageRoot)) {
       throw new ForbiddenException('Chemin de fichier invalide.');
