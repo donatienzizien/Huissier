@@ -192,6 +192,18 @@ export class UsersService {
       ? chemin
       : join(STORAGE_ROOT, chemin);
   }
+
+  getTenantContext(): { schemaName: string } {
+    return this.tenantContext.get();
+  }
+
+  async getPhotoPathDansSchema(schemaName: string, userId: string): Promise<string | null> {
+    const row = await this.tenantDb.queryOne<{ photo_path: string | null }>(
+      `SELECT photo_path FROM "${schemaName}".utilisateurs WHERE id = $1`,
+      [userId],
+    );
+    return row?.photo_path ?? null;
+  }
   async getPhotoPath(userId: string): Promise<string | null> {
     const { schemaName } = this.tenantContext.get();
     console.log('[AVATAR DEBUG] getPhotoPath', { schemaName, userId });
@@ -206,6 +218,7 @@ export class UsersService {
     return row?.photo_path ?? null;
   }
 }
+
 
 
 
