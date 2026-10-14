@@ -14,7 +14,7 @@ function extractErrorMessage(err: any): string {
   if (typeof raw === 'string' && raw.trim().length > 0) {
     return raw;
   }
-  return 'Identifiants invalides. VÃ©rifiez votre email et mot de passe.';
+  return 'Identifiants invalides. Vérifiez votre email et mot de passe.';
 }
 
 export default function Login() {
@@ -53,7 +53,7 @@ export default function Login() {
         </div>
         <div className="relative">
           <p className="font-serif text-2xl leading-snug text-white/95">
-            La gestion de votre cabinet, du dossier Ã  l'acte signifiÃ©.
+            La gestion de votre cabinet, du dossier à l'acte signifié.
           </p>
           <p className="text-sm text-navy-100/60 mt-4">
             Plateforme de gestion pour cabinets d'huissiers de justice.
@@ -74,7 +74,7 @@ export default function Login() {
 
           <h1 className="font-serif text-2xl text-navy-900">Connexion</h1>
           <p className="text-sm text-gray-500 mt-1.5 mb-8">
-            AccÃ©dez Ã  l'espace de votre cabinet.
+            Accédez à l'espace de votre cabinet.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -127,4 +127,5 @@ export default function Login() {
     </div>
   );
 }
+
 
