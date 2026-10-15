@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 import { useAuthSuperAdminStore } from '../store/authSuperAdmin';
 
 export const apiSuperAdmin = axios.create({

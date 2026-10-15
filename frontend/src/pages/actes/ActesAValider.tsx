@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ClipboardCheck, Check, X, Inbox, Eye, Download, FileText, Send, BadgeCheck, UserCheck } from 'lucide-react';
 import {
@@ -52,7 +52,7 @@ export default function ActesAValider() {
       const { data } = await api.get<ActeAValider[]>('/actes/a-valider');
       setActes(data);
     } catch (err: any) {
-      setError(err.response?.data?.message?.toString() ?? 'Impossible de charger les actes Ã  valider.');
+      setError(err.response?.data?.message?.toString() ?? 'Impossible de charger les actes à valider.');
     } finally {
       setLoading(false);
     }
@@ -66,7 +66,7 @@ export default function ActesAValider() {
       const data = await getActesValides();
       setActesValides(data);
     } catch (err: any) {
-      setError(err.response?.data?.message?.toString() ?? 'Impossible de charger les actes validÃ©s.');
+      setError(err.response?.data?.message?.toString() ?? 'Impossible de charger les actes validés.');
     } finally {
       setLoading(false);
     }
@@ -80,7 +80,7 @@ export default function ActesAValider() {
       const data = await getActesValides(true);
       setActesSignes(data);
     } catch (err: any) {
-      setError(err.response?.data?.message?.toString() ?? 'Impossible de charger les actes signÃ©s.');
+      setError(err.response?.data?.message?.toString() ?? 'Impossible de charger les actes signés.');
     } finally {
       setLoading(false);
     }
@@ -128,7 +128,7 @@ export default function ActesAValider() {
 
   async function handleEnvoyerClient(a: ActeValide) {
     const confirme = window.confirm(
-      `Envoyer le PDF officiel Â« ${a.numero} Â» Ã  l'adresse email du client ?`,
+      `Envoyer le PDF officiel « ${a.numero} » à l'adresse email du client ?`,
     );
 
     if (!confirme) return;
@@ -141,7 +141,7 @@ export default function ActesAValider() {
       await loadValides();
     } catch (err: any) {
       setErrorPostValidation(
-        err.response?.data?.message?.toString() ?? "L'envoi de l'acte a Ã©chouÃ©.",
+        err.response?.data?.message?.toString() ?? "L'envoi de l'acte a échoué.",
       );
     } finally {
       setActionPostValidation(null);
@@ -150,7 +150,7 @@ export default function ActesAValider() {
 
   async function handleMarquerSigne(a: ActeValide) {
     const confirme = window.confirm(
-      `Confirmer que le client a signÃ© ou retournÃ© l'acte Â« ${a.numero} Â» ?`,
+      `Confirmer que le client a signé ou retourné l'acte « ${a.numero} » ?`,
     );
 
     if (!confirme) return;
@@ -164,7 +164,7 @@ export default function ActesAValider() {
       await loadSignes();
     } catch (err: any) {
       setErrorPostValidation(
-        err.response?.data?.message?.toString() ?? 'Impossible de marquer cet acte comme signÃ©.',
+        err.response?.data?.message?.toString() ?? 'Impossible de marquer cet acte comme signé.',
       );
     } finally {
       setActionPostValidation(null);
@@ -198,7 +198,7 @@ export default function ActesAValider() {
       await loadValides();
     } catch (err: any) {
       setErrorPostValidation(
-        err.response?.data?.message?.toString() ?? 'Impossible de marquer cet acte comme notifiÃ©.',
+        err.response?.data?.message?.toString() ?? 'Impossible de marquer cet acte comme notifié.',
       );
     } finally {
       setActionPostValidation(null);
@@ -217,14 +217,14 @@ export default function ActesAValider() {
   }
 
   function nomNotificateur(a: ActeValide) {
-    return [a.notifie_par_prenom, a.notifie_par_nom].filter(Boolean).join(' ') || 'Agent non renseignÃ©';
+    return [a.notifie_par_prenom, a.notifie_par_nom].filter(Boolean).join(' ') || 'Agent non renseigné';
   }
   return (
     <div>
       <PageHeader
         icon={ClipboardCheck}
         title="Gestion des actes"
-        subtitle="Validation, consultation et tÃ©lÃ©chargement des documents officiels du cabinet."
+        subtitle="Validation, consultation et téléchargement des documents officiels du cabinet."
       />
 
       <div className="mb-5 flex gap-1 border-b border-gray-200" role="tablist" aria-label="Gestion des actes">
@@ -239,7 +239,7 @@ export default function ActesAValider() {
               : 'border-transparent text-gray-500 hover:text-navy-700'
           }`}
         >
-          Actes Ã  valider
+          Actes à valider
         </button>
 
         <button
@@ -253,7 +253,7 @@ export default function ActesAValider() {
               : 'border-transparent text-gray-500 hover:text-navy-700'
           }`}
         >
-          Actes validÃ©s
+          Actes validés
         </button>
 
         <button
@@ -267,7 +267,7 @@ export default function ActesAValider() {
               : 'border-transparent text-gray-500 hover:text-navy-700'
           }`}
         >
-          Actes signÃ©s
+          Actes signés
         </button>
       </div>
 
@@ -287,7 +287,7 @@ export default function ActesAValider() {
         <div role="tabpanel">
     
       {loading ? (
-            <p className="text-sm text-gray-400">Chargementâ€¦</p>
+            <p className="text-sm text-gray-400">Chargement…</p>
           ) : actes.length === 0 ? (
             <div className={`bg-white rounded-xl border border-gray-200 border-t-4 ${BORDER_TOP.navy} p-10 text-center`}>
               <Inbox size={28} className="mx-auto mb-3 text-gray-300" />
@@ -312,8 +312,8 @@ export default function ActesAValider() {
                       <Link to={`/dossiers/${a.dossier_id}`} className="text-navy-700 hover:underline font-nums">
                         {a.dossier_numero}
                       </Link>
-                      {a.soumis_par_nom && ` Â· Soumis par ${a.soumis_par_nom} ${a.soumis_par_prenom ?? ''}`}
-                      {a.soumis_le && ` Â· ${new Date(a.soumis_le).toLocaleString('fr-FR')}`}
+                      {a.soumis_par_nom && ` · Soumis par ${a.soumis_par_nom} ${a.soumis_par_prenom ?? ''}`}
+                      {a.soumis_le && ` · ${new Date(a.soumis_le).toLocaleString('fr-FR')}`}
                     </p>
                   </div>
 
@@ -342,7 +342,7 @@ export default function ActesAValider() {
                       disabled={busyId === a.id}
                       className={`flex items-center gap-1.5 text-xs font-medium text-white rounded-lg px-3 py-1.5 disabled:opacity-50 ${SOLID.green}`}
                     >
-                      <Check size={13} /> {busyId === a.id ? 'Validationâ€¦' : 'Valider'}
+                      <Check size={13} /> {busyId === a.id ? 'Validation…' : 'Valider'}
                     </button>
                   </div>
                 </div>
@@ -356,11 +356,11 @@ export default function ActesAValider() {
         <div role="tabpanel">
     
       {loading ? (
-            <p className="text-sm text-gray-400">Chargementâ€¦</p>
+            <p className="text-sm text-gray-400">Chargement…</p>
           ) : actesValides.length === 0 ? (
             <div className={`bg-white rounded-xl border border-gray-200 border-t-4 ${BORDER_TOP.navy} p-10 text-center`}>
               <Inbox size={28} className="mx-auto mb-3 text-gray-300" />
-              <p className="text-sm text-gray-500">Aucun acte validÃ© pour le moment.</p>
+              <p className="text-sm text-gray-500">Aucun acte validé pour le moment.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -375,35 +375,35 @@ export default function ActesAValider() {
 
                       <Badge
                         color="green"
-                        title={a.valide_le ? `ValidÃ© le ${fmtDate(a.valide_le)}` : undefined}
+                        title={a.valide_le ? `Validé le ${fmtDate(a.valide_le)}` : undefined}
                       >
-                        ValidÃ©
+                        Validé
                       </Badge>
 
                       {a.envoye_client_le && (
                         <Badge
                           color="blue"
-                          title={`EnvoyÃ© au client le ${fmtDate(a.envoye_client_le)}`}
+                          title={`Envoyé au client le ${fmtDate(a.envoye_client_le)}`}
                         >
-                          EnvoyÃ© au client
+                          Envoyé au client
                         </Badge>
                       )}
 
                       {a.signe_client_le && (
                         <Badge
                           color="green"
-                          title={`SignÃ© le ${fmtDate(a.signe_client_le)}`}
+                          title={`Signé le ${fmtDate(a.signe_client_le)}`}
                         >
-                          SignÃ©
+                          Signé
                         </Badge>
                       )}
 
                       {a.notifie_le && (
                         <Badge
                           color="purple"
-                          title={`NotifiÃ© par ${nomNotificateur(a)} le ${fmtDate(a.notifie_le)}`}
+                          title={`Notifié par ${nomNotificateur(a)} le ${fmtDate(a.notifie_le)}`}
                         >
-                          NotifiÃ© par {nomNotificateur(a)}
+                          Notifié par {nomNotificateur(a)}
                         </Badge>
                       )}
 
@@ -416,7 +416,7 @@ export default function ActesAValider() {
                       <Link to={`/dossiers/${a.dossier_id}`} className="text-navy-700 hover:underline font-nums">
                         {a.dossier_numero}
                       </Link>
-                      {a.valide_le && ` Â· ValidÃ© le ${new Date(a.valide_le).toLocaleString('fr-FR')}`}
+                      {a.valide_le && ` · Validé le ${new Date(a.valide_le).toLocaleString('fr-FR')}`}
                     </p>
                   </div>
 
@@ -449,7 +449,7 @@ export default function ActesAValider() {
                     >
                       <Send size={13} />
                       {actionPostValidation?.id === a.id && actionPostValidation.type === 'envoi'
-                        ? 'Envoiâ€¦'
+                        ? 'Envoi…'
                         : 'Envoyer'}
                     </button>
 
@@ -461,8 +461,8 @@ export default function ActesAValider() {
                     >
                       <BadgeCheck size={13} />
                       {actionPostValidation?.id === a.id && actionPostValidation.type === 'signe'
-                        ? 'Mise Ã  jourâ€¦'
-                        : 'SignÃ©'}
+                        ? 'Mise à jour…'
+                        : 'Signé'}
                     </button>
 
                     <Link
@@ -482,11 +482,11 @@ export default function ActesAValider() {
       {ongletActif === 'signes' && (
         <div role="tabpanel">
           {loading ? (
-            <p className="text-sm text-gray-400">Chargementâ€¦</p>
+            <p className="text-sm text-gray-400">Chargement…</p>
           ) : actesSignes.length === 0 ? (
             <div className={`bg-white rounded-xl border border-gray-200 border-t-4 ${BORDER_TOP.navy} p-10 text-center`}>
               <Inbox size={28} className="mx-auto mb-3 text-gray-300" />
-              <p className="text-sm text-gray-500">Aucun acte signÃ© pour le moment.</p>
+              <p className="text-sm text-gray-500">Aucun acte signé pour le moment.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -501,33 +501,33 @@ export default function ActesAValider() {
 
                       <Badge
                         color="green"
-                        title={a.valide_le ? `ValidÃ© le ${fmtDate(a.valide_le)}` : undefined}
+                        title={a.valide_le ? `Validé le ${fmtDate(a.valide_le)}` : undefined}
                       >
-                        ValidÃ©
+                        Validé
                       </Badge>
 
                       {a.envoye_client_le && (
                         <Badge
                           color="blue"
-                          title={`EnvoyÃ© au client le ${fmtDate(a.envoye_client_le)}`}
+                          title={`Envoyé au client le ${fmtDate(a.envoye_client_le)}`}
                         >
-                          EnvoyÃ© au client
+                          Envoyé au client
                         </Badge>
                       )}
 
                       <Badge
                         color="green"
-                        title={a.signe_client_le ? `SignÃ© le ${fmtDate(a.signe_client_le)}` : undefined}
+                        title={a.signe_client_le ? `Signé le ${fmtDate(a.signe_client_le)}` : undefined}
                       >
-                        SignÃ©
+                        Signé
                       </Badge>
 
                       {a.notifie_le && (
                         <Badge
                           color="purple"
-                          title={`NotifiÃ© par ${nomNotificateur(a)} le ${fmtDate(a.notifie_le)}`}
+                          title={`Notifié par ${nomNotificateur(a)} le ${fmtDate(a.notifie_le)}`}
                         >
-                          NotifiÃ© par {nomNotificateur(a)}
+                          Notifié par {nomNotificateur(a)}
                         </Badge>
                       )}
 
@@ -540,7 +540,7 @@ export default function ActesAValider() {
                       <Link to={`/dossiers/${a.dossier_id}`} className="text-navy-700 hover:underline font-nums">
                         {a.dossier_numero}
                       </Link>
-                      {a.signe_client_le && ` Â· SignÃ© le ${new Date(a.signe_client_le).toLocaleString('fr-FR')}`}
+                      {a.signe_client_le && ` · Signé le ${new Date(a.signe_client_le).toLocaleString('fr-FR')}`}
                     </p>
                   </div>
 
@@ -574,8 +574,8 @@ export default function ActesAValider() {
                       >
                         <UserCheck size={13} />
                         {actionPostValidation?.id === a.id && actionPostValidation.type === 'notification'
-                          ? 'Mise Ã  jourâ€¦'
-                          : 'NotifiÃ©'}
+                          ? 'Mise à jour…'
+                          : 'Notifié'}
                       </button>
                     )}
 
@@ -594,7 +594,7 @@ export default function ActesAValider() {
       )}
 
       {notificationActe && (
-        <Modal title="Marquer l'acte comme notifiÃ©" onClose={() => setNotificationActe(null)}>
+        <Modal title="Marquer l'acte comme notifié" onClose={() => setNotificationActe(null)}>
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
               Acte : <span className="font-nums font-medium">{notificationActe.numero}</span>
@@ -610,10 +610,10 @@ export default function ActesAValider() {
                 onChange={(e) => setAgentNotificateurId(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy-500"
               >
-                <option value="">SÃ©lectionner un agentâ€¦</option>
+                <option value="">Sélectionner un agent…</option>
                 {agentsActifs.map((agent) => (
                   <option key={agent.id} value={agent.id}>
-                    {agent.nom} {agent.prenom} â€” {agent.role}
+                    {agent.nom} {agent.prenom} — {agent.role}
                   </option>
                 ))}
               </select>
@@ -664,20 +664,20 @@ function RejeterModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: 
       <div className="space-y-4">
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">
-            Motif du rejet <span className="text-gray-400 font-normal">(optionnel, visible par le crÃ©ateur)</span>
+            Motif du rejet <span className="text-gray-400 font-normal">(optionnel, visible par le créateur)</span>
           </label>
 
           <textarea
             value={motif}
             onChange={(e) => setMotif(e.target.value)}
             rows={3}
-            placeholder="Ex : corriger le montant, vÃ©rifier l'adresse du dÃ©biteurâ€¦"
+            placeholder="Ex : corriger le montant, vérifier l'adresse du débiteur…"
             className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine-500"
           />
         </div>
 
         <p className="text-xs text-gray-400">
-          L'acte repassera en brouillon, modifiable par son crÃ©ateur, qui pourra le resoumettre.
+          L'acte repassera en brouillon, modifiable par son créateur, qui pourra le resoumettre.
         </p>
 
         <button
@@ -738,9 +738,9 @@ function CorrigerModal({
       <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
           <div>
-            <h2 className="font-serif text-[17px] text-navy-900">VÃ©rifier et corriger avant validation</h2>
+            <h2 className="font-serif text-[17px] text-navy-900">Vérifier et corriger avant validation</h2>
             <p className="text-xs text-gray-500 mt-0.5">
-              Vos modifications sont enregistrÃ©es lorsque vous cliquez sur Â« Enregistrer Â».
+              Vos modifications sont enregistrées lorsque vous cliquez sur « Enregistrer ».
             </p>
           </div>
 
@@ -752,7 +752,7 @@ function CorrigerModal({
         <div className="p-5 space-y-4">
     
       {loading ? (
-            <p className="text-sm text-gray-400">Chargement du contenuâ€¦</p>
+            <p className="text-sm text-gray-400">Chargement du contenu…</p>
           ) : (
             <EditeurActe contenuInitial={bodyHtml} onChange={setBodyHtml} />
           )}
@@ -774,7 +774,7 @@ function CorrigerModal({
               onClick={handleSave}
               className="flex-1 bg-navy-700 hover:bg-navy-900 text-white text-sm font-medium rounded-md py-2 disabled:opacity-60"
             >
-              {saving ? 'Enregistrementâ€¦' : 'Enregistrer les corrections'}
+              {saving ? 'Enregistrement…' : 'Enregistrer les corrections'}
             </button>
           </div>
         </div>

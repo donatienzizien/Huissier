@@ -1,4 +1,4 @@
-ï»¿import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { Plus, UserCog, Users as UsersIcon, Copy, Check } from 'lucide-react';
 import { api } from '../../lib/api';
 import Badge from '../../components/Badge';
@@ -103,7 +103,7 @@ export default function UsersList() {
       <PageHeader
         icon={UserCog}
         title="Utilisateurs"
-        subtitle="Personnel du cabinet â€” Clercs, Comptables, Secretaires et Agents terrain. Un mot de passe temporaire est envoye par email a la creation."
+        subtitle="Personnel du cabinet — Clercs, Comptables, Secretaires et Agents terrain. Un mot de passe temporaire est envoye par email a la creation."
         action={
           <button
             onClick={() => setShowCreate(true)}
@@ -135,7 +135,7 @@ export default function UsersList() {
             {loading && (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-gray-400">
-                  Chargementâ€¦
+                  Chargement…
                 </td>
               </tr>
             )}
@@ -249,7 +249,7 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
         <div className="space-y-3">
           <p className="text-sm text-gray-600">
             Un email a ete envoye a <strong>{resultat.email}</strong> avec les identifiants. Note aussi le
-            mot de passe temporaire ci-dessous â€” il ne sera plus jamais affiche.
+            mot de passe temporaire ci-dessous — il ne sera plus jamais affiche.
           </p>
           <div className="flex items-center justify-between rounded-md border border-brass-200 bg-brass-50 px-3 py-2">
             <span className="font-ref text-navy-900 font-semibold">{resultat.motDePasseTemporaire}</span>
@@ -333,7 +333,7 @@ function CreateUserModal({ onClose, onCreated }: { onClose: () => void; onCreate
           disabled={saving}
           className="w-full bg-navy-700 hover:bg-navy-900 text-white text-sm font-medium rounded-md py-2 disabled:opacity-60"
         >
-          {saving ? 'Creationâ€¦' : 'Creer le compte'}
+          {saving ? 'Creation…' : 'Creer le compte'}
         </button>
       </form>
     </Modal>

@@ -1,4 +1,4 @@
-ï»¿import { FormEvent, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiSuperAdmin } from '../../lib/apiSuperAdmin';
 import { useAuthSuperAdminStore } from '../../store/authSuperAdmin';
@@ -41,13 +41,13 @@ export default function SuperAdminLogin() {
         <div className="flex items-center gap-3 mb-8 justify-center">
           <SealMark size={34} className="text-brass-300" />
           <div className="leading-tight text-center">
-            <p className="font-serif font-semibold text-white">LOGINET</p>
+            <p className="font-serif font-semibold text-white">Etude de Maitre YAYA KONATE</p>
             <p className="text-xs text-brass-300 tracking-wide">SUPER ADMIN</p>
           </div>
         </div>
 
         <div className="bg-white rounded-xl p-7 shadow-xl">
-          <h1 className="font-serif text-xl text-navy-900">Espace propriÃ©taire</h1>
+          <h1 className="font-serif text-xl text-navy-900">Espace propriétaire</h1>
           <p className="text-sm text-gray-500 mt-1 mb-6">Gestion de tous les cabinets clients.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -83,7 +83,7 @@ export default function SuperAdminLogin() {
               disabled={loading}
               className="w-full bg-navy-900 hover:bg-navy-950 transition-colors text-white text-sm font-medium rounded-md py-2.5 disabled:opacity-60"
             >
-              {loading ? 'Connexionâ€¦' : 'Se connecter'}
+              {loading ? 'Connexion…' : 'Se connecter'}
             </button>
           </form>
         </div>

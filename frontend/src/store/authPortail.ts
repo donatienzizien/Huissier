@@ -14,7 +14,7 @@ interface AuthPortailState {
   logout: () => void;
 }
 
-const STORAGE_KEY = 'loginet_portail_session';
+const STORAGE_KEY = 'Etude de Maitre YAYA KONATE_portail_session';
 
 function loadInitial(): Pick<AuthPortailState, 'client' | 'accessToken'> {
   try {

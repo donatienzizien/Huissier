@@ -1,4 +1,4 @@
-﻿import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '../store/auth';
 // Roles legitimes pour l'espace cabinet. Toute session dont le role sorti
 // du localStorage ne figure pas ici est consideree perimee ou corrompue

@@ -1,4 +1,4 @@
-﻿import { create } from 'zustand';
+import { create } from 'zustand';
 
 export interface AuthUser {
   id: string;
@@ -17,7 +17,7 @@ interface AuthState {
   logout: () => void;
 }
 
-const STORAGE_KEY = 'loginet_huissiers_session';
+const STORAGE_KEY = 'Etude de Maitre YAYA KONATE_huissiers_session';
 
 function loadInitial(): Pick<AuthState, 'user' | 'accessToken' | 'refreshToken'> {
   try {

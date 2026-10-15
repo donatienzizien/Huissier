@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Download, FileText, Trash2, UserCheck } from 'lucide-react';
 import { api } from '../../lib/api';
@@ -128,7 +128,7 @@ export default function ActesList() {
             disabled={exporting}
             className="flex items-center gap-2 bg-white border border-gray-300 hover:border-brass-400 hover:text-brass-700 text-navy-700 text-sm font-medium rounded-lg px-4 py-2 shadow-sm hover:shadow-md transition-all disabled:opacity-60"
           >
-            <Download size={16} /> {exporting ? 'Exportâ€¦' : 'Exporter CSV'}
+            <Download size={16} /> {exporting ? 'Export…' : 'Exporter CSV'}
           </button>
         }
       />
@@ -145,7 +145,7 @@ export default function ActesList() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher par numero d'acte, de dossier ou clientâ€¦"
+            placeholder="Rechercher par numero d'acte, de dossier ou client…"
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brass-400 focus:border-brass-400"
           />
         </form>
@@ -184,7 +184,7 @@ export default function ActesList() {
             {loading && (
               <tr>
                 <td colSpan={8} className="px-4 py-6 text-center text-gray-400">
-                  Chargementâ€¦
+                  Chargement…
                 </td>
               </tr>
             )}
@@ -216,7 +216,7 @@ export default function ActesList() {
                     {a.client_nom} {a.client_prenom ?? ''}
                   </td>
                   <td className="px-4 py-3 text-gray-500">
-                    {a.signataire_nom ? `${a.signataire_nom} ${a.signataire_prenom ?? ''}` : 'â€”'}
+                    {a.signataire_nom ? `${a.signataire_nom} ${a.signataire_prenom ?? ''}` : '—'}
                   </td>
                   <td className="px-4 py-3 text-gray-500">
                     {a.notifie_par_nom ? (
@@ -227,7 +227,7 @@ export default function ActesList() {
                     ) : estActeProcedure ? (
                       <span className="text-gray-300">Non notifie</span>
                     ) : (
-                      <span className="text-gray-300">â€”</span>
+                      <span className="text-gray-300">—</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-gray-500">

@@ -1,4 +1,4 @@
-﻿import { api } from './api';
+import { api } from './api';
 
 async function telechargerBlob(url: string, filename: string) {
   const response = await api.get(url, { responseType: 'blob' });

@@ -1,4 +1,4 @@
-ï»¿import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Plus, Search, Download, Trash2, FolderOpen } from 'lucide-react';
 import { api } from '../../lib/api';
@@ -133,7 +133,7 @@ export default function DossiersList() {
               disabled={exporting}
               className="flex items-center gap-2 bg-white border border-gray-300 hover:border-brass-400 hover:text-brass-700 text-navy-700 text-sm font-medium rounded-lg px-4 py-2 shadow-sm hover:shadow-md transition-all disabled:opacity-60"
             >
-              <Download size={16} /> {exporting ? 'Exportâ€¦' : 'Exporter CSV'}
+              <Download size={16} /> {exporting ? 'Export…' : 'Exporter CSV'}
             </button>
             {peutModifier && (
               <button
@@ -159,7 +159,7 @@ export default function DossiersList() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher par numero, client ou debiteurâ€¦"
+            placeholder="Rechercher par numero, client ou debiteur…"
             className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brass-400 focus:border-brass-400"
           />
         </form>
@@ -212,7 +212,7 @@ export default function DossiersList() {
             {loading && (
               <tr>
                 <td colSpan={7} className="px-4 py-6 text-center text-gray-400">
-                  Chargementâ€¦
+                  Chargement…
                 </td>
               </tr>
             )}
@@ -234,7 +234,7 @@ export default function DossiersList() {
                   {d.client_nom} {d.client_prenom ?? ''}
                 </td>
                 <td className="px-4 py-3 text-gray-600">
-                  {d.debiteur_nom ? `${d.debiteur_nom} ${d.debiteur_prenom ?? ''}` : <span className="text-gray-300">â€”</span>}
+                  {d.debiteur_nom ? `${d.debiteur_nom} ${d.debiteur_prenom ?? ''}` : <span className="text-gray-300">—</span>}
                 </td>
                 <td className="px-4 py-3 text-gray-600">{LABELS_TYPE_DOSSIER[d.type]}</td>
                 <td className="px-4 py-3">
@@ -350,7 +350,7 @@ function TiersPicker({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={`Rechercher un ${roleTiers === 'CLIENT' ? 'client' : 'debiteur'} existantâ€¦`}
+            placeholder={`Rechercher un ${roleTiers === 'CLIENT' ? 'client' : 'debiteur'} existant…`}
             className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brass-400 focus:border-brass-400"
           />
           {results.length > 0 && (
@@ -366,7 +366,7 @@ function TiersPicker({
                     }}
                     className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50"
                   >
-                    {c.nom} {c.prenom ?? ''} {c.telephone ? `Â· ${c.telephone}` : ''}
+                    {c.nom} {c.prenom ?? ''} {c.telephone ? `· ${c.telephone}` : ''}
                   </button>
                 </li>
               ))}
@@ -473,7 +473,7 @@ function CreateDossierModal({ onClose, onCreated }: { onClose: () => void; onCre
           disabled={saving}
           className="w-full bg-navy-700 hover:bg-navy-900 text-white text-sm font-medium rounded-lg py-2 shadow-sm hover:shadow-md transition-all disabled:opacity-60"
         >
-          {saving ? 'Creationâ€¦' : 'Creer le dossier'}
+          {saving ? 'Creation…' : 'Creer le dossier'}
         </button>
       </form>
     </Modal>

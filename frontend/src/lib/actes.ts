@@ -1,4 +1,4 @@
-﻿import type { TypeActe } from '../types';
+import type { TypeActe } from '../types';
 import { api } from './api';
 
 // Un modele d'acte renvoie un document HTML complet (DOCTYPE + <style> +

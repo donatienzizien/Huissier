@@ -1,4 +1,4 @@
-ï»¿import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Building2, Plus, LogOut, Copy, CheckCircle2, Ban, RotateCcw } from 'lucide-react';
 import { apiSuperAdmin } from '../../lib/apiSuperAdmin';
@@ -48,7 +48,7 @@ export default function SuperAdminDashboard() {
       await apiSuperAdmin.patch(`/cabinets/${c.id}/${c.statut === 'ACTIF' ? 'suspendre' : 'reactiver'}`);
       load();
     } catch (err: any) {
-      setErreur(err.response?.data?.message?.toString() ?? 'Erreur lors de la mise Ã  jour.');
+      setErreur(err.response?.data?.message?.toString() ?? 'Erreur lors de la mise à jour.');
     } finally {
       setBusyId(null);
     }
@@ -69,7 +69,7 @@ export default function SuperAdminDashboard() {
         <div className="flex items-center gap-3">
           <SealMark size={26} className="text-brass-300" />
           <div className="leading-tight">
-            <p className="font-serif font-semibold text-sm">LOGINET</p>
+            <p className="font-serif font-semibold text-sm">Etude de Maitre YAYA KONATE</p>
             <p className="text-[10px] text-brass-300 tracking-wide">SUPER ADMIN</p>
           </div>
         </div>
@@ -79,7 +79,7 @@ export default function SuperAdminDashboard() {
             onClick={handleLogout}
             className="flex items-center gap-1.5 text-xs text-navy-200 hover:text-white"
           >
-            <LogOut size={14} /> DÃ©connexion
+            <LogOut size={14} /> Déconnexion
           </button>
         </div>
       </header>
@@ -92,7 +92,7 @@ export default function SuperAdminDashboard() {
             </div>
             <div>
               <h1 className="font-serif text-2xl text-navy-900">Cabinets clients</h1>
-              <p className="text-sm text-gray-500 mt-0.5">Tous les cabinets provisionnÃ©s sur la plateforme.</p>
+              <p className="text-sm text-gray-500 mt-0.5">Tous les cabinets provisionnés sur la plateforme.</p>
             </div>
           </div>
           <button
@@ -128,7 +128,7 @@ export default function SuperAdminDashboard() {
                 <th className="text-left px-4 py-3">Sous-domaine</th>
                 <th className="text-left px-4 py-3">Email</th>
                 <th className="text-left px-4 py-3">Statut</th>
-                <th className="text-left px-4 py-3">CrÃ©Ã© le</th>
+                <th className="text-left px-4 py-3">Créé le</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -136,7 +136,7 @@ export default function SuperAdminDashboard() {
               {loading && (
                 <tr>
                   <td colSpan={6} className="px-4 py-6 text-center text-gray-400">
-                    Chargementâ€¦
+                    Chargement…
                   </td>
                 </tr>
               )}
@@ -168,7 +168,7 @@ export default function SuperAdminDashboard() {
                         </>
                       ) : (
                         <>
-                          <RotateCcw size={12} /> RÃ©activer
+                          <RotateCcw size={12} /> Réactiver
                         </>
                       )}
                     </button>
@@ -223,7 +223,7 @@ function CreateCabinetModal({ onClose, onCreated }: { onClose: () => void; onCre
         slug: form.slug,
       });
     } catch (err: any) {
-      setError(err.response?.data?.message?.toString() ?? 'Erreur lors de la crÃ©ation.');
+      setError(err.response?.data?.message?.toString() ?? 'Erreur lors de la création.');
     } finally {
       setSaving(false);
     }
@@ -239,26 +239,26 @@ function CreateCabinetModal({ onClose, onCreated }: { onClose: () => void; onCre
 
   if (resultat) {
     return (
-      <Modal title="Cabinet crÃ©Ã©" onClose={onClose}>
+      <Modal title="Cabinet créé" onClose={onClose}>
         <div className="space-y-3">
           <p className="text-sm text-gray-700">
-            Le cabinet est provisionnÃ©, accessible sur <strong>{resultat.slug}.localhost</strong>. Un email
-            d'accÃ¨s a Ã©tÃ© envoyÃ© Ã  <strong>{resultat.huissierEmail}</strong>. Si l'envoi Ã©choue (SMTP non
-            configurÃ©), transmets ces identifiants manuellement â€” le mot de passe ne sera plus affichÃ©
+            Le cabinet est provisionné, accessible sur <strong>{resultat.slug}.localhost</strong>. Un email
+            d'accès a été envoyé à <strong>{resultat.huissierEmail}</strong>. Si l'envoi échoue (SMTP non
+            configuré), transmets ces identifiants manuellement — le mot de passe ne sera plus affiché
             ensuite.
           </p>
           <div className="bg-navy-50 border border-navy-100 rounded-md p-3 flex items-center justify-between">
             <span className="font-nums text-sm text-navy-900">{resultat.motDePasseTemporaire}</span>
             <button onClick={copier} className="flex items-center gap-1 text-xs text-navy-700 hover:underline shrink-0 ml-3">
               {copie ? <CheckCircle2 size={13} /> : <Copy size={13} />}
-              {copie ? 'CopiÃ©' : 'Copier'}
+              {copie ? 'Copié' : 'Copier'}
             </button>
           </div>
           <button
             onClick={onClose}
             className="w-full bg-navy-700 hover:bg-navy-900 text-white text-sm font-medium rounded-md py-2"
           >
-            TerminÃ©
+            Terminé
           </button>
         </div>
       </Modal>
@@ -283,7 +283,7 @@ function CreateCabinetModal({ onClose, onCreated }: { onClose: () => void; onCre
             <input
               required
               pattern="[a-z][a-z0-9_]{2,30}"
-              title="Minuscules, chiffres et underscores, 3-30 caractÃ¨res"
+              title="Minuscules, chiffres et underscores, 3-30 caractères"
               value={form.slug}
               onChange={(e) => setForm({ ...form, slug: e.target.value })}
               placeholder="ex: cabinet_ouaga"
@@ -303,7 +303,7 @@ function CreateCabinetModal({ onClose, onCreated }: { onClose: () => void; onCre
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">TÃ©lÃ©phone (optionnel)</label>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Téléphone (optionnel)</label>
             <input
               value={form.telephone}
               onChange={(e) => setForm({ ...form, telephone: e.target.value })}
@@ -335,7 +335,7 @@ function CreateCabinetModal({ onClose, onCreated }: { onClose: () => void; onCre
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">PrÃ©nom</label>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Prénom</label>
               <input
                 required
                 value={form.huissierPrenom}
@@ -363,7 +363,7 @@ function CreateCabinetModal({ onClose, onCreated }: { onClose: () => void; onCre
           disabled={saving}
           className="w-full bg-navy-700 hover:bg-navy-900 text-white text-sm font-medium rounded-md py-2 disabled:opacity-60"
         >
-          {saving ? 'Provisionnementâ€¦' : 'CrÃ©er le cabinet'}
+          {saving ? 'Provisionnement…' : 'Créer le cabinet'}
         </button>
       </form>
     </Modal>

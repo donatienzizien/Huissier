@@ -1,4 +1,4 @@
-﻿// Palette centralisee de la plateforme : chaque "couleur" correspond a un
+// Palette centralisee de la plateforme : chaque "couleur" correspond a un
 // sens metier constant (navy = dossiers/general, brass = chiffre d'affaires,
 // green = actes/repartition, wine = agenda/urgence, gold = recouvrement/taux).
 // Reutilisee par Dashboard, Rapports, Facturation, Agenda pour un langage

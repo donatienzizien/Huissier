@@ -1,4 +1,4 @@
-﻿import { ReactNode } from 'react';
+import { ReactNode } from 'react';
 
 type CouleurBadge = 'green' | 'blue' | 'purple' | 'gray';
 
@@ -7,7 +7,7 @@ export interface BadgeProps {
   color?: CouleurBadge;
   title?: string;
 
-  // Compatibilité avec les pages existantes du projet.
+  // Compatibilit� avec les pages existantes du projet.
   statut?: string;
   label?: string;
 }

@@ -1,4 +1,4 @@
-ï»¿import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { api } from '../../lib/api';
 import {
@@ -89,10 +89,10 @@ export default function GenererActeModal({ dossierId, onClose, onCreated }: Prop
     return (
       <Modal title="Generer un acte" onClose={onClose}>
         {loading ? (
-          <p className="text-sm text-gray-400">Chargement des modelesâ€¦</p>
+          <p className="text-sm text-gray-400">Chargement des modeles…</p>
         ) : modeles.length === 0 ? (
           <p className="text-sm text-gray-500">
-            Aucun modele d'acte actif. Creez-en un depuis Administration â†’ Modeles d'actes.
+            Aucun modele d'acte actif. Creez-en un depuis Administration ? Modeles d'actes.
           </p>
         ) : (
           <form onSubmit={handleGenererApercu} className="space-y-3">
@@ -159,7 +159,7 @@ export default function GenererActeModal({ dossierId, onClose, onCreated }: Prop
               disabled={generatingApercu}
               className="w-full bg-navy-700 hover:bg-navy-900 text-white text-sm font-medium rounded-md py-2 disabled:opacity-60"
             >
-              {generatingApercu ? "Preparation de l'apercuâ€¦" : "Voir et modifier l'apercu"}
+              {generatingApercu ? "Preparation de l'apercu…" : "Voir et modifier l'apercu"}
             </button>
           </form>
         )}
@@ -202,7 +202,7 @@ export default function GenererActeModal({ dossierId, onClose, onCreated }: Prop
               onClick={() => handleEnregistrer(false)}
               className="flex-1 border border-navy-300 text-navy-700 text-sm font-medium rounded-md py-2 hover:bg-navy-50 disabled:opacity-60"
             >
-              {saving === 'brouillon' ? 'Enregistrementâ€¦' : 'Enregistrer comme brouillon'}
+              {saving === 'brouillon' ? 'Enregistrement…' : 'Enregistrer comme brouillon'}
             </button>
             <button
               type="button"
@@ -210,12 +210,12 @@ export default function GenererActeModal({ dossierId, onClose, onCreated }: Prop
               onClick={() => handleEnregistrer(true)}
               className="flex-1 bg-navy-700 hover:bg-navy-900 text-white text-sm font-medium rounded-md py-2 disabled:opacity-60"
             >
-              {saving === 'soumission' ? 'Envoiâ€¦' : 'Soumettre pour validation'}
+              {saving === 'soumission' ? 'Envoi…' : 'Soumettre pour validation'}
             </button>
           </div>
           <p className="text-xs text-gray-400">
-            Â« Brouillon Â» reste modifiable et n'est visible que dans le dossier. Â« Soumettre Â» l'envoie
-            a l'Huissier pour validation â€” le PDF officiel ne sera genere qu'apres validation.
+            « Brouillon » reste modifiable et n'est visible que dans le dossier. « Soumettre » l'envoie
+            a l'Huissier pour validation — le PDF officiel ne sera genere qu'apres validation.
           </p>
         </div>
       </div>

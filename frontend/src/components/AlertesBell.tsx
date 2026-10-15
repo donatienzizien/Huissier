@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Bell, AlertTriangle, Clock, CalendarClock } from 'lucide-react';
 import { api } from '../lib/api';
@@ -31,7 +31,7 @@ export default function AlertesBell() {
 
   useEffect(() => {
     load();
-    const interval = setInterval(load, 5 * 60 * 1000); // rafraÃ®chi toutes les 5 min
+    const interval = setInterval(load, 5 * 60 * 1000); // rafraîchi toutes les 5 min
     return () => clearInterval(interval);
   }, []);
 
@@ -68,7 +68,7 @@ export default function AlertesBell() {
             <h3 className="text-sm font-semibold text-ink-900">Alertes</h3>
           </div>
           {alertes.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-gray-400 text-center">Rien Ã  signaler pour le moment.</p>
+            <p className="px-4 py-6 text-sm text-gray-400 text-center">Rien à signaler pour le moment.</p>
           ) : (
             alertes.map((a) => {
               const Icon = ICONS[a.type];

@@ -46,9 +46,9 @@ export default function DashboardLayout() {
         <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
           <SealMark size={30} className="text-brass-400 shrink-0" />
           <span className="font-serif font-semibold text-[15px] leading-tight">
-            LOGINET
+            Etude de Maitre YAYA KONATE
             <br />
-            Huissiers
+            Huissier
           </span>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">

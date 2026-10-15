@@ -1,4 +1,4 @@
-ï»¿export type TypeDossier = 'RECOUVREMENT' | 'EXPULSION' | 'SIGNIFICATION' | 'SAISIE' | 'AUTRE';
+export type TypeDossier = 'RECOUVREMENT' | 'EXPULSION' | 'SIGNIFICATION' | 'SAISIE' | 'AUTRE';
 export type StatutDossier = 'OUVERT' | 'EN_COURS' | 'CLOTURE' | 'ARCHIVE';
 export type StatutClient = 'ACTIF' | 'SOLDE' | 'INSOLVABLE';
 export type CategorieClient = 'PARTICULIER' | 'ENTREPRISE' | 'BANQUE' | 'BAILLEUR' | 'ADMINISTRATION' | 'AUTRE';
@@ -35,7 +35,7 @@ export const LABELS_CATEGORIE_CLIENT: Record<CategorieClient, string> = {
 
 // Role du tiers dans une fiche "clients" : CLIENT (mandant, paie le
 // cabinet) ou DEBITEUR (poursuivi dans un dossier). Meme table, role
-// distinct â€” voir dossiers.client_id (payeur) vs dossiers.debiteur_id
+// distinct — voir dossiers.client_id (payeur) vs dossiers.debiteur_id
 // (poursuivi, optionnel pour compatibilite avec les dossiers anciens).
 export type RoleTiers = 'CLIENT' | 'DEBITEUR';
 
@@ -397,7 +397,7 @@ export interface PieceJointe {
 }
 
 // Ligne telle que retournee par GET /actes (liste globale, tous
-// dossiers confondus) â€” voir ActesService.findAll.
+// dossiers confondus) — voir ActesService.findAll.
 export interface ActeListItem {
   id: string;
   numero: string;
@@ -449,7 +449,7 @@ export type StatutCreance =
 export const LABELS_STATUT_CREANCE: Record<StatutCreance, string> = {
   BROUILLON: 'Brouillon',
   ACTIVE: 'Active',
-  PARTIELLEMENT_ENCAISSEE: 'Partiellement encaissÃ©e',
+  PARTIELLEMENT_ENCAISSEE: 'Partiellement encaissée',
   EN_NEGOCIATION: 'En negociation',
   SUSPENDUE: 'Suspendue',
   SOLDEE: 'Soldee',

@@ -1,4 +1,4 @@
-﻿import { create } from 'zustand';
+import { create } from 'zustand';
 
 export interface SuperAdminUser {
   id: string;
@@ -16,11 +16,11 @@ interface AuthSuperAdminState {
   logout: () => void;
 }
 
-// Cle de stockage DIFFERENTE de celle du cabinet (loginet_huissiers_session)
-// et du portail client (loginet_huissiers_portail_session) - indispensable
+// Cle de stockage DIFFERENTE de celle du cabinet (Etude de Maitre YAYA KONATE_huissiers_session)
+// et du portail client (Etude de Maitre YAYA KONATE_huissiers_portail_session) - indispensable
 // pour que les trois sessions (cabinet, portail, super admin) ne s'ecrasent
 // jamais entre elles, meme ouvertes dans le meme navigateur.
-const STORAGE_KEY = 'loginet_huissiers_super_admin_session';
+const STORAGE_KEY = 'Etude de Maitre YAYA KONATE_huissiers_super_admin_session';
 
 function loadInitial(): Pick<AuthSuperAdminState, 'user' | 'accessToken' | 'refreshToken'> {
   try {
