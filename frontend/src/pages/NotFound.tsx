@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+ï»¿import { Link } from 'react-router-dom';
 import { ArrowLeft, FileQuestion } from 'lucide-react';
 
 export default function NotFound() {
@@ -18,7 +18,7 @@ export default function NotFound() {
         </h1>
 
         <p className="mt-3 text-sm leading-6 text-gray-600">
-          La page demandée n’existe pas, a été déplacée ou vous n’y avez pas accès.
+          La page demandÃ©e nâ€™existe pas, a Ã©tÃ© dÃ©placÃ©e ou vous nâ€™y avez pas accÃ¨s.
         </p>
 
         <Link
@@ -32,3 +32,4 @@ export default function NotFound() {
     </main>
   );
 }
+

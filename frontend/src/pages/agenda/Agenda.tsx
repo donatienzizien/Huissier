@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Trash2, Bell, Clock, Calendar, CalendarOff, CalendarCheck, CalendarClock, CalendarRange } from 'lucide-react';
 import { api } from '../../lib/api';
@@ -195,7 +195,7 @@ export default function Agenda() {
                           )}
                           {e.assigne_nom && (
                             <span>
-                              � {e.assigne_nom} {e.assigne_prenom}
+                              · {e.assigne_nom} {e.assigne_prenom}
                             </span>
                           )}
                         </div>
@@ -235,3 +235,4 @@ export default function Agenda() {
     </div>
   );
 }
+

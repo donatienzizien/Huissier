@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+ï»¿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Download, Receipt, Wallet, TrendingUp, PieChart as PieChartIcon } from 'lucide-react';
 import { api } from '../../lib/api';
@@ -106,7 +106,7 @@ export default function FacturesList() {
       <PageHeader
         icon={Receipt}
         title="Facturation & paiements"
-        subtitle="Les factures se creent depuis la fiche d'un dossier (bouton « Nouvelle facture »)."
+        subtitle="Les factures se creent depuis la fiche d'un dossier (bouton Â« Nouvelle facture Â»)."
         accent="brass"
         action={
           <button
@@ -114,7 +114,7 @@ export default function FacturesList() {
             disabled={exporting}
             className="flex items-center gap-2 bg-white border border-gray-300 hover:border-brass-400 hover:text-brass-700 text-navy-700 text-sm font-medium rounded-lg px-4 py-2 shadow-sm hover:shadow-md transition-all disabled:opacity-60"
           >
-            <Download size={16} /> {exporting ? 'Export…' : 'Exporter CSV'}
+            <Download size={16} /> {exporting ? 'Exportâ€¦' : 'Exporter CSV'}
           </button>
         }
       />
@@ -277,3 +277,4 @@ export default function FacturesList() {
     </div>
   );
 }
+

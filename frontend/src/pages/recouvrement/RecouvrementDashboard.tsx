@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+ï»¿import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertTriangle,
@@ -93,22 +93,22 @@ export default function RecouvrementDashboard() {
   const balanceAgee = useMemo(
     () => [
       {
-        nom: 'À échoir',
+        nom: 'Ã€ Ã©choir',
         valeur: data?.balanceAgee.aEchoir ?? 0,
         couleur: '#14213D',
       },
       {
-        nom: '1–30 jours',
+        nom: '1â€“30 jours',
         valeur: data?.balanceAgee.retard1a30 ?? 0,
         couleur: '#B08D3E',
       },
       {
-        nom: '31–60 jours',
+        nom: '31â€“60 jours',
         valeur: data?.balanceAgee.retard31a60 ?? 0,
         couleur: '#D97706',
       },
       {
-        nom: '61–90 jours',
+        nom: '61â€“90 jours',
         valeur: data?.balanceAgee.retard61a90 ?? 0,
         couleur: '#8B1E3F',
       },
@@ -125,43 +125,43 @@ export default function RecouvrementDashboard() {
 
   const cards = [
     {
-      label: 'Solde à recouvrer',
+      label: 'Solde Ã  recouvrer',
       value: formatFCFA(soldeTotal),
       icon: Wallet,
       color: 'navy' as const,
     },
     {
-      label: 'Montant échu',
+      label: 'Montant Ã©chu',
       value: formatFCFA(data?.synthese.montantEchu ?? 0),
       icon: AlertTriangle,
       color: 'wine' as const,
     },
     {
-      label: 'Créances en cours',
+      label: 'CrÃ©ances en cours',
       value: String(data?.synthese.nombreCreancesEnCours ?? 0),
       icon: HandCoins,
       color: 'gold' as const,
     },
     {
-      label: 'Créances échues',
+      label: 'CrÃ©ances Ã©chues',
       value: String(data?.synthese.nombreCreancesEchues ?? 0),
       icon: Clock3,
       color: 'brass' as const,
     },
     {
-      label: 'Actions échues',
+      label: 'Actions Ã©chues',
       value: String(data?.synthese.nombreActionsEchues ?? 0),
       icon: BellRing,
       color: 'wine' as const,
     },
     {
-      label: 'Montant encaissé',
+      label: 'Montant encaissÃ©',
       value: formatFCFA(data?.synthese.montantEncaisseTotal ?? 0),
       icon: TrendingUp,
       color: 'green' as const,
     },
     {
-      label: 'Taux d’encaissement',
+      label: 'Taux dâ€™encaissement',
       value:
         data && data.synthese.montantInitialTotal > 0
           ? `${Math.round(
@@ -180,14 +180,14 @@ export default function RecouvrementDashboard() {
       <PageHeader
         icon={HandCoins}
         title="Tableau de bord recouvrement"
-        subtitle="Suivez les encours, retards, actions à traiter et débiteurs prioritaires."
+        subtitle="Suivez les encours, retards, actions Ã  traiter et dÃ©biteurs prioritaires."
         accent="gold"
         action={
           <Link
             to="/recouvrement"
             className="inline-flex items-center gap-2 rounded-lg bg-navy-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-navy-800 hover:shadow-md"
           >
-            Voir les créances <ArrowRight size={16} />
+            Voir les crÃ©ances <ArrowRight size={16} />
           </Link>
         }
       />
@@ -199,7 +199,7 @@ export default function RecouvrementDashboard() {
             onClick={load}
             className="inline-flex shrink-0 items-center gap-1.5 font-medium hover:underline"
           >
-            <RefreshCw size={13} /> Réessayer
+            <RefreshCw size={13} /> RÃ©essayer
           </button>
         </div>
       )}
@@ -248,10 +248,10 @@ export default function RecouvrementDashboard() {
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-navy-900">
-                    Balance âgée
+                    Balance Ã¢gÃ©e
                   </h2>
                   <p className="text-xs text-gray-500">
-                    Répartition du solde restant par ancienneté
+                    RÃ©partition du solde restant par anciennetÃ©
                   </p>
                 </div>
               </div>
@@ -259,7 +259,7 @@ export default function RecouvrementDashboard() {
               {balanceAgee.length === 0 ? (
                 <div className="flex h-64 flex-col items-center justify-center text-gray-400">
                   <Inbox size={24} className="mb-2" />
-                  <p className="text-sm">Aucune créance à recouvrer.</p>
+                  <p className="text-sm">Aucune crÃ©ance Ã  recouvrer.</p>
                 </div>
               ) : (
                 <div className="relative mt-2">
@@ -310,7 +310,7 @@ export default function RecouvrementDashboard() {
                       {formatFCFA(soldeTotal)}
                     </p>
                     <p className="text-[10px] uppercase tracking-wide text-gray-500">
-                      À recouvrer
+                      Ã€ recouvrer
                     </p>
                   </div>
                 </div>
@@ -328,10 +328,10 @@ export default function RecouvrementDashboard() {
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-navy-900">
-                    Actions à traiter
+                    Actions Ã  traiter
                   </h2>
                   <p className="text-xs text-gray-500">
-                    Prochaines actions de relance planifiées
+                    Prochaines actions de relance planifiÃ©es
                   </p>
                 </div>
               </div>
@@ -340,7 +340,7 @@ export default function RecouvrementDashboard() {
                 {data?.prochainesActions.length === 0 ? (
                   <div className="flex h-64 flex-col items-center justify-center text-gray-400">
                     <BellRing size={24} className="mb-2" />
-                    <p className="text-sm">Aucune action planifiée.</p>
+                    <p className="text-sm">Aucune action planifiÃ©e.</p>
                   </div>
                 ) : (
                   <ul>
@@ -352,11 +352,11 @@ export default function RecouvrementDashboard() {
                         >
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-medium text-navy-900">
-                              {action.creanceNumero} · {action.creanceLibelle}
+                              {action.creanceNumero} Â· {action.creanceLibelle}
                             </span>
                             <span className="mt-0.5 block truncate text-xs text-gray-500">
-                              {action.debiteurNom ?? 'Débiteur non renseigné'}{' '}
-                              {action.debiteurPrenom ?? ''} ·{' '}
+                              {action.debiteurNom ?? 'DÃ©biteur non renseignÃ©'}{' '}
+                              {action.debiteurPrenom ?? ''} Â·{' '}
                               {action.prochaineAction}
                             </span>
                           </span>
@@ -391,10 +391,10 @@ export default function RecouvrementDashboard() {
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-navy-900">
-                    Débiteurs prioritaires
+                    DÃ©biteurs prioritaires
                   </h2>
                   <p className="text-xs text-gray-500">
-                    Classés par montant échu puis solde restant
+                    ClassÃ©s par montant Ã©chu puis solde restant
                   </p>
                 </div>
               </div>
@@ -402,7 +402,7 @@ export default function RecouvrementDashboard() {
                 to="/debiteurs"
                 className="text-xs font-medium text-wine-700 hover:text-wine-900 hover:underline"
               >
-                Voir les débiteurs
+                Voir les dÃ©biteurs
               </Link>
             </div>
 
@@ -410,23 +410,23 @@ export default function RecouvrementDashboard() {
               {data?.debiteursPrioritaires.length === 0 ? (
                 <div className="flex h-52 flex-col items-center justify-center text-gray-400">
                   <Users size={24} className="mb-2" />
-                  <p className="text-sm">Aucun débiteur prioritaire.</p>
+                  <p className="text-sm">Aucun dÃ©biteur prioritaire.</p>
                 </div>
               ) : (
                 <table className="w-full text-sm">
                   <thead className="bg-wine-50 text-xs uppercase tracking-wide text-wine-700">
                     <tr>
-                      <th className="px-3 py-2.5 text-left">Débiteur</th>
-                      <th className="px-3 py-2.5 text-right">Créances</th>
+                      <th className="px-3 py-2.5 text-left">DÃ©biteur</th>
+                      <th className="px-3 py-2.5 text-right">CrÃ©ances</th>
                       <th className="px-3 py-2.5 text-right">Solde restant</th>
-                      <th className="px-3 py-2.5 text-right">Montant échu</th>
+                      <th className="px-3 py-2.5 text-right">Montant Ã©chu</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {data?.debiteursPrioritaires.map((debiteur) => (
                       <tr key={debiteur.debiteurId} className="hover:bg-gray-50">
                         <td className="px-3 py-3 font-medium text-navy-900">
-                          {debiteur.debiteurNom ?? '—'}{' '}
+                          {debiteur.debiteurNom ?? 'â€”'}{' '}
                           {debiteur.debiteurPrenom ?? ''}
                         </td>
                         <td className="px-3 py-3 text-right font-nums text-gray-600">
@@ -450,3 +450,4 @@ export default function RecouvrementDashboard() {
     </div>
   );
 }
+
