@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+ï»¿import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { Pool } from 'pg';
 import { PrismaService } from '../prisma/prisma.service';
@@ -83,7 +83,7 @@ export class AlertesClientsService {
         const restant = Number(f.montant_total) - Number(f.montant_paye);
         await this.mailService.envoyer(
           f.client_email,
-          `${cabinetNom} — Echeance a venir (facture ${f.numero})`,
+          `${cabinetNom} â€” Echeance a venir (facture ${f.numero})`,
           `<p>Bonjour ${escapeHtml(f.client_nom)},</p>
            <p>Nous vous rappelons que la facture <strong>${escapeHtml(f.numero)}</strong>
            (dossier ${escapeHtml(f.dossier_numero)}) arrive a echeance le
@@ -126,7 +126,7 @@ export class AlertesClientsService {
         );
         await this.mailService.envoyer(
           f.client_email,
-          `${cabinetNom} — Facture en retard (${f.numero})`,
+          `${cabinetNom} â€” Facture en retard (${f.numero})`,
           `<p>Bonjour ${escapeHtml(f.client_nom)},</p>
            <p>La facture <strong>${escapeHtml(f.numero)}</strong> (dossier
            ${escapeHtml(f.dossier_numero)}) est en retard de paiement depuis ${joursRetard}
@@ -148,3 +148,4 @@ function escapeHtml(input: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 }
+

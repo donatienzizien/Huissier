@@ -56,7 +56,15 @@ export class PdfService implements OnModuleInit, OnModuleDestroy {
       try {
         const page = await browser.newPage();
         try {
-          await page.setContent(html, { waitUntil: 'networkidle0' });
+          const htmlFinal = /<meta[^>]+charset/i.test(html)
+  ? html
+  : html.includes('<head')
+    ? html.replace(/<head([^>]*)>/i, '<head$1><meta charset="UTF-8">')
+    : html.includes('<html')
+      ? html.replace(/<html([^>]*)>/i, '<html$1><head><meta charset="UTF-8"></head>')
+      : '<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"></head><body>' + html + '</body></html>';
+
+await page.setContent(htmlFinal, { waitUntil: 'networkidle0' });
           const buffer = await page.pdf({
             format: 'A4',
             printBackground: true,
@@ -79,3 +87,4 @@ export class PdfService implements OnModuleInit, OnModuleDestroy {
     throw derniereErreur;
   }
 }
+

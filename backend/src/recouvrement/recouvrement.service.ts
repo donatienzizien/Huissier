@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   ForbiddenException,
   Injectable,
@@ -1084,7 +1084,7 @@ export class RecouvrementService {
     }
 
     const html = `
-      <html>
+      <!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
         <head>
           <style>
             body { font-family: Arial, sans-serif; padding: 40px; }
@@ -1165,3 +1165,4 @@ export class RecouvrementService {
     };
   }
 }
+
