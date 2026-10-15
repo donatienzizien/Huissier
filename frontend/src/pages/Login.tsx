@@ -47,7 +47,7 @@ export default function Login() {
         <div className="flex items-center gap-3 relative">
           <SealMark size={38} className="text-brass-300" />
           <div className="leading-tight">
-            <p className="font-serif font-semibold text-lg">LOGINET</p>
+            <p className="font-serif font-semibold text-lg">Maître Yaya Konaté</p>
             <p className="font-serif text-lg -mt-1">Huissiers</p>
           </div>
         </div>
@@ -59,7 +59,7 @@ export default function Login() {
             Plateforme de gestion pour cabinets d'huissiers de justice.
           </p>
         </div>
-        <p className="text-xs text-navy-100/40 relative">LOGINET LAB</p>
+        <p className="text-xs text-navy-100/40 relative">Huissier de justice · Commissaire priseur</p>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 py-12">
@@ -67,7 +67,7 @@ export default function Login() {
           <div className="md:hidden flex items-center gap-3 mb-8">
             <SealMark size={34} className="text-navy-700" />
             <div className="leading-tight">
-              <p className="font-serif font-semibold text-navy-900">LOGINET</p>
+              <p className="font-serif font-semibold text-navy-900">Maître Yaya Konaté</p>
               <p className="font-serif text-navy-900 -mt-1">Huissiers</p>
             </div>
           </div>
@@ -127,6 +127,7 @@ export default function Login() {
     </div>
   );
 }
+
 
 
 

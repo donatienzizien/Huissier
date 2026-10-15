@@ -41,7 +41,7 @@ export default function SuperAdminLogin() {
         <div className="flex items-center gap-3 mb-8 justify-center">
           <SealMark size={34} className="text-brass-300" />
           <div className="leading-tight text-center">
-            <p className="font-serif font-semibold text-white">LOGINET</p>
+            <p className="font-serif font-semibold text-white">Maître Yaya Konaté</p>
             <p className="text-xs text-brass-300 tracking-wide">SUPER ADMIN</p>
           </div>
         </div>
@@ -91,3 +91,4 @@ export default function SuperAdminLogin() {
     </div>
   );
 }
+

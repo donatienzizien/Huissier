@@ -69,7 +69,7 @@ export default function SuperAdminDashboard() {
         <div className="flex items-center gap-3">
           <SealMark size={26} className="text-brass-300" />
           <div className="leading-tight">
-            <p className="font-serif font-semibold text-sm">LOGINET</p>
+            <p className="font-serif font-semibold text-sm">Maître Yaya Konaté</p>
             <p className="text-[10px] text-brass-300 tracking-wide">SUPER ADMIN</p>
           </div>
         </div>
@@ -369,3 +369,4 @@ function CreateCabinetModal({ onClose, onCreated }: { onClose: () => void; onCre
     </Modal>
   );
 }
+
