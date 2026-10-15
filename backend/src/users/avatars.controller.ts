@@ -1,4 +1,4 @@
-import {
+﻿import {
   BadRequestException,
   Controller,
   ForbiddenException,
@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
-import { createReadStream } from 'fs';
+import { createReadStream, existsSync } from 'fs';
 import * as crypto from 'crypto';
 import * as path from 'path';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -20,10 +20,10 @@ import { UsersService } from './users.service';
 const AVATAR_URL_SECRET = process.env.AVATAR_URL_SECRET;
 const AVATAR_URL_EXPIRATION = Number(process.env.AVATAR_URL_EXPIRATION ?? 300);
 
-function creerSignature(userId: string, expiration: number): string {
+function creerSignature(schemaName: string, userId: string, expiration: number): string {
   return crypto
     .createHmac('sha256', AVATAR_URL_SECRET as string)
-    .update(`${userId}:${expiration}`)
+    .update(`${schemaName}:${userId}:${expiration}`)
     .digest('hex');
 }
 
@@ -47,11 +47,12 @@ export class AvatarsController {
       throw new NotFoundException('Aucune photo pour cet utilisateur.');
     }
 
+    const { schemaName } = this.usersService.getTenantContext();
     const expiration = Math.floor(Date.now() / 1000) + AVATAR_URL_EXPIRATION;
-    const signature = creerSignature(userId, expiration);
+    const signature = creerSignature(schemaName, userId, expiration);
 
     return {
-      url: `/api/avatars/${userId}/file?expires=${expiration}&signature=${signature}`,
+      url: `/api/avatars/${userId}/file?tenant=${encodeURIComponent(schemaName)}&expires=${expiration}&signature=${signature}`,
       expiresAt: new Date(expiration * 1000).toISOString(),
     };
   }
@@ -59,6 +60,7 @@ export class AvatarsController {
   @Get(':userId/file')
   async servir(
     @Param('userId') userId: string,
+    @Query('tenant') tenant: string,
     @Query('expires') expires: string,
     @Query('signature') signature: string,
     @Res() res: Response,
@@ -67,8 +69,12 @@ export class AvatarsController {
       throw new Error('AVATAR_URL_SECRET n’est pas configuré.');
     }
 
-    if (!userId || !expires || !signature) {
+    if (!userId || !tenant || !expires || !signature) {
       throw new BadRequestException('Paramètres de signature manquants.');
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(tenant)) {
+      throw new ForbiddenException('Tenant invalide.');
     }
 
     const expiration = Number(expires);
@@ -77,7 +83,7 @@ export class AvatarsController {
       throw new ForbiddenException('URL expirée.');
     }
 
-    const signatureAttendue = creerSignature(userId, expiration);
+    const signatureAttendue = creerSignature(tenant, userId, expiration);
 
     const signatureValide = crypto.timingSafeEqual(
       Buffer.from(signature),
@@ -88,7 +94,7 @@ export class AvatarsController {
       throw new ForbiddenException('Signature invalide.');
     }
 
-    const cheminFichier = await this.usersService.getPhotoPath(userId);
+    const cheminFichier = await this.usersService.getPhotoPathDansSchema(tenant, userId);
 
     if (!cheminFichier) {
       throw new NotFoundException('Aucune photo pour cet utilisateur.');
@@ -97,7 +103,9 @@ export class AvatarsController {
     const storageRoot = path.resolve(
       process.env.ACTES_STORAGE_PATH ?? path.join(process.cwd(), 'storage'),
     );
-    const cheminAbsolu = path.resolve(cheminFichier);
+    const cheminAbsolu = path.isAbsolute(cheminFichier)
+      ? path.resolve(cheminFichier)
+      : path.resolve(storageRoot, cheminFichier);
 
     if (!cheminAbsolu.startsWith(storageRoot)) {
       throw new ForbiddenException('Chemin de fichier invalide.');
@@ -107,3 +115,4 @@ export class AvatarsController {
     createReadStream(cheminAbsolu).pipe(res);
   }
 }
+

@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+﻿import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuthStore } from '../store/auth';
@@ -30,7 +30,7 @@ export default function Login() {
     setError(null);
     setLoading(true);
     try {
-      const { data } = await api.post('/auth/login', { email, motDePasse }, { headers: { 'x-cabinet-slug': 'kewalew' } });
+      const { data } = await api.post('/auth/login', { email, motDePasse }, { headers: { 'x-cabinet-slug': 'test2' } });
       setSession(data.user, data.accessToken, data.refreshToken);
       navigate('/dashboard');
     } catch (err: any) {
@@ -47,8 +47,8 @@ export default function Login() {
         <div className="flex items-center gap-3 relative">
           <SealMark size={38} className="text-brass-300" />
           <div className="leading-tight">
-            <p className="font-serif font-semibold text-lg">Etude de Maitre YAYA KONATE</p>
-            <p className="font-serif text-lg -mt-1">Huissier</p>
+            <p className="font-serif font-semibold text-lg">Maître Yaya Konaté</p>
+            <p className="font-serif text-lg -mt-1">Huissiers</p>
           </div>
         </div>
         <div className="relative">
@@ -56,10 +56,10 @@ export default function Login() {
             La gestion de votre cabinet, du dossier à l'acte signifié.
           </p>
           <p className="text-sm text-navy-100/60 mt-4">
-            Plateforme de gestion pour cabinets d'Huissier de justice.
+            Plateforme de gestion pour cabinets d'huissiers de justice.
           </p>
         </div>
-        <p className="text-xs text-navy-100/40 relative">Etude de Maitre YAYA KONATE LAB</p>
+        <p className="text-xs text-navy-100/40 relative">Huissier de justice · Commissaire priseur</p>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 py-12">
@@ -67,8 +67,8 @@ export default function Login() {
           <div className="md:hidden flex items-center gap-3 mb-8">
             <SealMark size={34} className="text-navy-700" />
             <div className="leading-tight">
-              <p className="font-serif font-semibold text-navy-900">Etude de Maitre YAYA KONATE</p>
-              <p className="font-serif text-navy-900 -mt-1">Huissier</p>
+              <p className="font-serif font-semibold text-navy-900">Maître Yaya Konaté</p>
+              <p className="font-serif text-navy-900 -mt-1">Huissiers</p>
             </div>
           </div>
 
@@ -127,4 +127,8 @@ export default function Login() {
     </div>
   );
 }
+
+
+
+
 

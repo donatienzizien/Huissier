@@ -232,3 +232,5 @@ export class RapportsService {
     return Buffer.from(arrayBuffer as ArrayBuffer);
   }
 }
+
+

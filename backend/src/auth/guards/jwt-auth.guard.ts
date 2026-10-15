@@ -1,10 +1,10 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
+﻿import { ExecutionContext, Injectable } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { TenantContextService } from '../../tenant/tenant-context.service';
 
-// Étend le guard Passport standard : une fois le token validé, si le
-// TenantMiddleware n'a pas déjà résolu le cabinet via le sous-domaine,
-// on le déduit du JWT (cabinetId/schemaName) — conforme au §4.1 du CDC.
+// Le contexte du JWT est prioritaire : il correspond toujours au cabinet
+// de l'utilisateur connecte. Le middleware peut resoudre un cabinet via le
+// sous-domaine, mais il ne doit pas ecraser le cabinet du token.
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt-access') {
   constructor(private readonly tenantContext: TenantContextService) {
@@ -18,16 +18,18 @@ export class JwtAuthGuard extends AuthGuard('jwt-access') {
     const req = context.switchToHttp().getRequest();
     const user = req.user;
 
-    if (user?.role !== 'SUPER_ADMIN' && !this.tenantContext.isSet()) {
+    if (user?.role !== 'SUPER_ADMIN') {
       if (!user?.cabinetId || !user?.schemaName) {
         return false;
       }
+
       this.tenantContext.set({
         id: user.cabinetId,
         slug: user.cabinetSlug,
         schemaName: user.schemaName,
       });
     }
+
     return true;
   }
 }
