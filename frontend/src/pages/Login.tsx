@@ -1,4 +1,4 @@
-ï»¿import { FormEvent, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { useAuthStore } from '../store/auth';
@@ -14,7 +14,7 @@ function extractErrorMessage(err: any): string {
   if (typeof raw === 'string' && raw.trim().length > 0) {
     return raw;
   }
-  return 'Identifiants invalides. VÃ©rifiez votre email et mot de passe.';
+  return 'Identifiants invalides. Vérifiez votre email et mot de passe.';
 }
 
 export default function Login() {
@@ -47,19 +47,19 @@ export default function Login() {
         <div className="flex items-center gap-3 relative">
           <SealMark size={38} className="text-brass-300" />
           <div className="leading-tight">
-            <p className="font-serif font-semibold text-lg">MaÃ®tre Yaya KonatÃ©</p>
-            <p className="font-serif text-lg -mt-1">Huissiers</p>
+            <p className="font-serif font-semibold text-lg">Maître Yaya Konaté</p>
+            <p className="font-serif text-lg -mt-1">Huissier</p>
           </div>
         </div>
         <div className="relative">
           <p className="font-serif text-2xl leading-snug text-white/95">
-            La gestion de votre cabinet, du dossier Ã  l'acte signifiÃ©.
+            La gestion de votre cabinet, du dossier à l'acte signifié.
           </p>
           <p className="text-sm text-navy-100/60 mt-4">
-            Plateforme de gestion pour cabinets d'huissiers de justice.
+            Plateforme de gestion pour cabinets d'Huissier de justice.
           </p>
         </div>
-        <p className="text-xs text-navy-100/40 relative">Huissier de justice Â· Commissaire priseur</p>
+        <p className="text-xs text-navy-100/40 relative">Huissier de justice · Commissaire priseur</p>
       </div>
 
       <div className="flex-1 flex items-center justify-center px-6 py-12">
@@ -67,14 +67,14 @@ export default function Login() {
           <div className="md:hidden flex items-center gap-3 mb-8">
             <SealMark size={34} className="text-navy-700" />
             <div className="leading-tight">
-              <p className="font-serif font-semibold text-navy-900">MaÃ®tre Yaya KonatÃ©</p>
-              <p className="font-serif text-navy-900 -mt-1">Huissiers</p>
+              <p className="font-serif font-semibold text-navy-900">Maître Yaya Konaté</p>
+              <p className="font-serif text-navy-900 -mt-1">Huissier</p>
             </div>
           </div>
 
           <h1 className="font-serif text-2xl text-navy-900">Connexion</h1>
           <p className="text-sm text-gray-500 mt-1.5 mb-8">
-            AccÃ©dez Ã  l'espace de votre cabinet.
+            Accédez à l'espace de votre cabinet.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -104,7 +104,7 @@ export default function Login() {
                 value={motDePasse}
                 onChange={(e) => setMotDePasse(e.target.value)}
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-navy-500/40 focus:border-navy-500"
-                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                placeholder="••••••••"
               />
             </div>
 
@@ -119,7 +119,7 @@ export default function Login() {
               disabled={loading}
               className="w-full bg-navy-700 hover:bg-navy-800 transition-colors text-white text-sm font-medium rounded-md py-2.5 disabled:opacity-60"
             >
-              {loading ? 'Connexionâ€¦' : 'Se connecter'}
+              {loading ? 'Connexion…' : 'Se connecter'}
             </button>
           </form>
         </div>
