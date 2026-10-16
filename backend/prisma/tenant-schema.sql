@@ -1,4 +1,4 @@
--- Gabarit DDL exÃ©cutÃ© pour CHAQUE nouveau cabinet, dans son propre schÃ©ma
+﻿-- Gabarit DDL exÃ©cutÃ© pour CHAQUE nouveau cabinet, dans son propre schÃ©ma
 -- PostgreSQL (ex: cabinet_sonatel). Le placeholder {{SCHEMA}} est remplacÃ©
 -- dynamiquement par TenantProvisioningService avant exÃ©cution.
 --
@@ -10,7 +10,7 @@ CREATE SCHEMA IF NOT EXISTS "{{SCHEMA}}";
 
 CREATE TYPE "{{SCHEMA}}".role_utilisateur AS ENUM ('HUISSIER', 'CLERC', 'COMPTABLE', 'SECRETAIRE', 'AGENT_TERRAIN');
 CREATE TYPE "{{SCHEMA}}".statut_dossier AS ENUM ('OUVERT', 'EN_COURS', 'CLOTURE', 'ARCHIVE');
-CREATE TYPE "{{SCHEMA}}".type_dossier AS ENUM ('RECOUVREMENT', 'EXPULSION', 'SIGNIFICATION', 'SAISIE', 'AUTRE');
+CREATE TYPE "{{SCHEMA}}".type_dossier AS ENUM ('RECOUVREMENT', 'RECOUVREMENT_AMIABLE', 'EXPULSION', 'SIGNIFICATION', 'EXECUTION', 'SAISIE', 'CONSULTATION', 'CONSTAT', 'AUTRE');
 CREATE TYPE "{{SCHEMA}}".statut_client AS ENUM ('ACTIF', 'SOLDE', 'INSOLVABLE');
 CREATE TYPE "{{SCHEMA}}".categorie_client AS ENUM ('PARTICULIER', 'ENTREPRISE', 'BANQUE', 'BAILLEUR', 'ADMINISTRATION', 'AUTRE');
 CREATE TYPE "{{SCHEMA}}".role_tiers AS ENUM ('CLIENT', 'DEBITEUR');
@@ -288,6 +288,7 @@ CREATE TABLE "{{SCHEMA}}".relances (
   envoyee_le  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX idx_relances_client ON "{{SCHEMA}}".relances(client_id);
+
 
 
 

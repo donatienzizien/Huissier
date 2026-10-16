@@ -2,9 +2,13 @@
 
 export const TYPES_DOSSIER = [
   'RECOUVREMENT',
+  'RECOUVREMENT_AMIABLE',
   'EXPULSION',
   'SIGNIFICATION',
+  'EXECUTION',
   'SAISIE',
+  'CONSULTATION',
+  'CONSTAT',
   'AUTRE',
 ] as const;
 
