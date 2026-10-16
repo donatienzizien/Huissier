@@ -1,13 +1,26 @@
-﻿export type TypeDossier = 'RECOUVREMENT' | 'EXPULSION' | 'SIGNIFICATION' | 'SAISIE' | 'AUTRE';
+﻿export type TypeDossier =
+  | 'RECOUVREMENT'
+  | 'RECOUVREMENT_AMIABLE'
+  | 'EXPULSION'
+  | 'SIGNIFICATION'
+  | 'EXECUTION'
+  | 'SAISIE'
+  | 'CONSULTATION'
+  | 'CONSTAT'
+  | 'AUTRE';
 export type StatutDossier = 'OUVERT' | 'EN_COURS' | 'CLOTURE' | 'ARCHIVE';
 export type StatutClient = 'ACTIF' | 'SOLDE' | 'INSOLVABLE';
 export type CategorieClient = 'PARTICULIER' | 'ENTREPRISE' | 'BANQUE' | 'BAILLEUR' | 'ADMINISTRATION' | 'AUTRE';
 
 export const LABELS_TYPE_DOSSIER: Record<TypeDossier, string> = {
   RECOUVREMENT: 'Recouvrement',
+  RECOUVREMENT_AMIABLE: 'Recouvrement amiable',
   EXPULSION: 'Expulsion',
   SIGNIFICATION: 'Signification',
+  EXECUTION: 'Exécution',
   SAISIE: 'Saisie',
+  CONSULTATION: 'Consultation',
+  CONSTAT: 'Constat',
   AUTRE: 'Autre',
 };
 
@@ -499,4 +512,5 @@ export interface EncaissementCreance {
   encaisse_par_prenom?: string | null;
   created_at: string;
 }
+
 

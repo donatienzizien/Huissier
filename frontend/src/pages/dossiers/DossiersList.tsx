@@ -17,6 +17,17 @@ import Modal from '../../components/Modal';
 import PageHeader from '../../components/PageHeader';
 import { useAuthStore } from '../../store/auth';
 
+const COULEURS_TYPE_DOSSIER: Record<string, string> = {
+  RECOUVREMENT: 'bg-red-50 text-red-700 border-red-200',
+  RECOUVREMENT_AMIABLE: 'bg-green-50 text-green-700 border-green-200',
+  EXPULSION: 'bg-purple-50 text-purple-700 border-purple-200',
+  SIGNIFICATION: 'bg-blue-50 text-blue-700 border-blue-200',
+  EXECUTION: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+  SAISIE: 'bg-orange-50 text-orange-700 border-orange-200',
+  CONSULTATION: 'bg-gray-50 text-gray-700 border-gray-200',
+  CONSTAT: 'bg-amber-50 text-amber-700 border-amber-200',
+  AUTRE: 'bg-gray-50 text-gray-600 border-gray-200',
+};
 export default function DossiersList() {
   const [searchParams] = useSearchParams();
   const clientIdFiltre = searchParams.get('clientId') ?? undefined;
@@ -195,6 +206,38 @@ export default function DossiersList() {
         </select>
       </div>
 
+      <div className="flex flex-wrap gap-2 mt-4">
+        <button
+          onClick={() => {
+            setType('');
+            setPage(1);
+          }}
+          className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+            type === ''
+              ? 'bg-navy-700 text-white border-navy-700'
+              : 'bg-white text-navy-700 border-gray-300 hover:border-brass-400'
+          }`}
+        >
+          Tous
+        </button>
+        {Object.entries(LABELS_TYPE_DOSSIER).map(([value, label]) => (
+          <button
+            key={value}
+            onClick={() => {
+              setType(value as TypeDossier);
+              setPage(1);
+            }}
+            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
+              type === value
+                ? 'bg-navy-700 text-white border-navy-700'
+                : 'bg-white text-navy-700 border-gray-300 hover:border-brass-400'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="mt-4 bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
         <table className="w-full text-sm">
           <thead className="bg-navy-50 text-navy-700 text-xs uppercase tracking-wide">
@@ -236,7 +279,15 @@ export default function DossiersList() {
                 <td className="px-4 py-3 text-gray-600">
                   {d.debiteur_nom ? `${d.debiteur_nom} ${d.debiteur_prenom ?? ''}` : <span className="text-gray-300">—</span>}
                 </td>
-                <td className="px-4 py-3 text-gray-600">{LABELS_TYPE_DOSSIER[d.type]}</td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                      COULEURS_TYPE_DOSSIER[d.type] ?? 'bg-gray-50 text-gray-600 border-gray-200'
+                    }`}
+                  >
+                    {LABELS_TYPE_DOSSIER[d.type]}
+                  </span>
+                </td>
                 <td className="px-4 py-3">
                   <Badge statut={d.statut} label={LABELS_STATUT_DOSSIER[d.statut]} />
                 </td>
@@ -479,6 +530,7 @@ function CreateDossierModal({ onClose, onCreated }: { onClose: () => void; onCre
     </Modal>
   );
 }
+
 
 
 
