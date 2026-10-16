@@ -72,6 +72,40 @@ export default function DossiersList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, statut, type, clientIdFiltre, debiteurIdFiltre]);
 
+  useEffect(() => {
+    let annule = false;
+
+    async function chargerCompteurs() {
+      const entrees = Object.keys(LABELS_TYPE_DOSSIER);
+
+      const resultats = await Promise.all(
+        entrees.map(async (t) => {
+          try {
+            const { data } = await api.get<PaginatedResult<Dossier>>('/dossiers', {
+              params: { type: t, limit: 1 },
+            });
+            const total =
+              (data as { pagination?: { total?: number }; data: Dossier[] }).pagination?.total ??
+              data.data.length;
+            return [t, total] as const;
+          } catch {
+            return [t, 0] as const;
+          }
+        }),
+      );
+
+      if (!annule) {
+        setCompteurs(Object.fromEntries(resultats));
+      }
+    }
+
+    chargerCompteurs();
+
+    return () => {
+      annule = true;
+    };
+  }, []);
+
   function handleSearchSubmit(e: FormEvent) {
     e.preventDefault();
     setPage(1);
@@ -531,6 +565,7 @@ function CreateDossierModal({ onClose, onCreated }: { onClose: () => void; onCre
     </Modal>
   );
 }
+
 
 
 
