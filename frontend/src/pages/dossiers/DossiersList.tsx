@@ -219,7 +219,7 @@ export default function DossiersList() {
               : 'bg-white text-navy-700 border-gray-300 hover:border-brass-400'
           }`}
         >
-          Tous
+          Tous ({result?.pagination?.total ?? 0})
         </button>
         {Object.entries(LABELS_TYPE_DOSSIER).map(([value, label]) => (
           <button
@@ -531,6 +531,7 @@ function CreateDossierModal({ onClose, onCreated }: { onClose: () => void; onCre
     </Modal>
   );
 }
+
 
 
 
