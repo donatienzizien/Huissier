@@ -1,9 +1,10 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+﻿import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { TenantDbService } from '../tenant/tenant-db.service';
 import { TenantContextService } from '../tenant/tenant-context.service';
 import { LoginPortailDto } from './dto/login-portail.dto';
+import { ChangerMotDePassePortailDto } from './dto/changer-mot-de-passe.dto';
 
 @Injectable()
 export class PortailClientAuthService {

@@ -1,10 +1,11 @@
-import { Controller, Get, Param, Post, Body, UseGuards, Res } from '@nestjs/common';
+﻿import { Controller, Get, Param, Post, Body, UseGuards, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { PortailClientAuthService } from './portail-client-auth.service';
 import { PortailClientService } from './portail-client.service';
 import { JwtPortailAuthGuard } from './guards/jwt-portail-auth.guard';
 import { CurrentClient, AuthenticatedClient } from './decorators/current-client.decorator';
 import { LoginPortailDto } from './dto/login-portail.dto';
+import { ChangerMotDePassePortailDto } from './dto/changer-mot-de-passe.dto';
 
 @Controller('portail-client')
 export class PortailClientController {
@@ -67,4 +68,17 @@ export class PortailClientController {
     res.setHeader('Content-Disposition', `inline; filename="${numero}.pdf"`);
     res.send(buffer);
   }
+
+    res.send(buffer);
+  }
+
+  @UseGuards(JwtPortailAuthGuard)
+  @Post('changer-mot-de-passe')
+  changerMotDePasse(
+    @CurrentClient() client: AuthenticatedClient,
+    @Body() dto: ChangerMotDePassePortailDto,
+  ) {
+    return this.authService.changerMotDePasse(client.sub, dto);
+  }
 }
+

@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+﻿import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 const Login = lazy(() => import('./pages/Login'));
@@ -23,6 +23,7 @@ const ProfilPersonnel = lazy(() => import('./pages/profil/ProfilPersonnel'));
 const PortailLogin = lazy(() => import('./pages/portail/PortailLogin'));
 const PortailDashboard = lazy(() => import('./pages/portail/PortailDashboard'));
 const PortailDossierDetail = lazy(() => import('./pages/portail/PortailDossierDetail'));
+  const ChangerMotDePasse = lazy(() => import('./pages/portail/ChangerMotDePasse'));
 const SuperAdminLogin = lazy(() => import('./pages/super-admin/SuperAdminLogin'));
 const SuperAdminDashboard = lazy(() => import('./pages/super-admin/SuperAdminDashboard'));
 const NotFound = lazy(() => import('./pages/NotFound'));
@@ -88,6 +89,7 @@ export default function App() {
           <Route element={<PortailLayout />}>
             <Route path="/portail" element={<PortailDashboard />} />
             <Route path="/portail/dossiers/:id" element={<PortailDossierDetail />} />
+              <Route path="/portail/parametres" element={<ChangerMotDePasse />} />
           </Route>
         </Route>
 
@@ -101,3 +103,4 @@ export default function App() {
     </BrowserRouter>
   );
 }
+

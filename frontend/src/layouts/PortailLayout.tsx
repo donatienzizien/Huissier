@@ -1,5 +1,5 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+﻿import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { LogOut, Settings } from 'lucide-react';
 import { useAuthPortailStore } from '../store/authPortail';
 import SealMark from '../components/SealMark';
 
