@@ -45,6 +45,7 @@ export default function DossiersList() {
   const [exporting, setExporting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
+  const [compteurs, setCompteurs] = useState<Record<string, number>>({});
 
   async function load() {
     setLoading(true);
@@ -233,7 +234,7 @@ export default function DossiersList() {
                 : 'bg-white text-navy-700 border-gray-300 hover:border-brass-400'
             }`}
           >
-            {label}
+            {label} ({compteurs[value] ?? 0})
           </button>
         ))}
       </div>
@@ -530,6 +531,7 @@ function CreateDossierModal({ onClose, onCreated }: { onClose: () => void; onCre
     </Modal>
   );
 }
+
 
 
 
