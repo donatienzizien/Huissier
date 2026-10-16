@@ -57,4 +57,27 @@ export class PortailClientAuthService {
       client: { id: client.id, nom: client.nom, prenom: client.prenom, email: client.email },
     };
   }
+  async changerMotDePasse(clientId: string, dto: ChangerMotDePassePortailDto) {
+    const client = await this.tenantDb.queryOne<{ id: string; mot_de_passe: string | null }>(
+      `SELECT id, mot_de_passe FROM clients WHERE id = $1`,
+      [clientId],
+    );
+    if (!client || !client.mot_de_passe) {
+      throw new UnauthorizedException('Session invalide.');
+    }
+
+    const valid = await bcrypt.compare(dto.motDePasseActuel, client.mot_de_passe);
+    if (!valid) {
+      throw new BadRequestException('Mot de passe actuel incorrect.');
+    }
+
+    const hashed = await bcrypt.hash(dto.nouveauMotDePasse, Number(process.env.BCRYPT_COST ?? 12));
+    await this.tenantDb.query(`UPDATE clients SET mot_de_passe = $1 WHERE id = $2`, [
+      hashed,
+      clientId,
+    ]);
+
+    return { message: 'Mot de passe modifie avec succes.' };
+  }
 }
+

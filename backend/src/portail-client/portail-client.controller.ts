@@ -69,9 +69,6 @@ export class PortailClientController {
     res.send(buffer);
   }
 
-    res.send(buffer);
-  }
-
   @UseGuards(JwtPortailAuthGuard)
   @Post('changer-mot-de-passe')
   changerMotDePasse(
@@ -81,4 +78,3 @@ export class PortailClientController {
     return this.authService.changerMotDePasse(client.sub, dto);
   }
 }
-
