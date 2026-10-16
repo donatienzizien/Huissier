@@ -81,3 +81,6 @@ backend/hash-zizien.txt
 backend/src/tenant/*.bak2
 backend/src/tenant/*.bak3
 comptes-admin-loginet.txt
+
+*.bak
+*.bak2
